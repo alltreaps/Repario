@@ -1,0 +1,75 @@
+# EMERGENCY FIX FOR REPARIO PRODUCTION 500 ERROR
+# Copy and paste these commands directly on your production server
+
+# Step 1: Check current status
+echo "=== CHECKING CURRENT STATUS ==="
+systemctl status repario-backend
+curl -s http://localhost:3000/health || echo "Backend not responding"
+ps aux | grep node
+
+# Step 2: Stop any running backend processes
+echo "=== STOPPING BACKEND ==="
+systemctl stop repario-backend 2>/dev/null
+pkill -f "node.*index" 2>/dev/null
+pkill -f "repario" 2>/dev/null
+
+# Step 3: Check what's in the backend directory
+echo "=== CHECKING BACKEND FILES ==="
+ls -la /var/www/repario/backend/
+ls -la /var/www/repario/backend/src/ 2>/dev/null || echo "No src directory"
+ls -la /var/www/repario/backend/dist/ 2>/dev/null || echo "No dist directory"
+
+# Step 4: If you have the source files, rebuild
+echo "=== REBUILDING BACKEND ==="
+cd /var/www/repario/backend
+npm install
+npm run build 2>/dev/null || echo "Build failed - check if src/index.ts exists"
+
+# Step 5: Create a simple test to see what's wrong
+echo "=== CREATING SIMPLE TEST ==="
+cat > /tmp/test-backend.js << 'EOF'
+const express = require('express');
+const app = express();
+const PORT = 3000;
+
+app.use(express.json());
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+app.post('/api/items', (req, res) => {
+  console.log('POST /api/items received:', req.body);
+  res.status(201).json({ id: 'test-123', name: 'Test Item', message: 'This is a test response' });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Test server running on port ${PORT}`);
+});
+EOF
+
+# Step 6: Run the test server temporarily
+echo "=== STARTING TEST SERVER ==="
+echo "Starting test server on port 3000..."
+node /tmp/test-backend.js &
+TEST_PID=$!
+
+# Wait and test
+sleep 2
+curl -s http://localhost:3000/health
+echo ""
+curl -X POST -H "Content-Type: application/json" -d '{"name":"test","unit_price":10}' http://localhost:3000/api/items
+
+# Kill test server
+kill $TEST_PID 2>/dev/null
+
+echo ""
+echo "=== NEXT STEPS ==="
+echo "If the test server worked, the issue is with your main backend code."
+echo "You need to upload your updated backend files to /var/www/repario/backend/"
+echo ""
+echo "To upload from your local machine, run:"
+echo "scp -r 'e:\\new projects\\Repario - Copy\\backend\\*' root@your-server-ip:/var/www/repario/backend/"
+echo ""
+echo "Then run this to start the real backend:"
+echo "cd /var/www/repario/backend && npm install && npm run build && systemctl start repario-backend"

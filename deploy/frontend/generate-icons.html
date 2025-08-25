@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PWA Icons</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        .icon-container { display: inline-block; margin: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Generate PWA Icons for Repario</h1>
+    <p>This page will generate the required PNG icons from the SVG. Right-click on each canvas and "Save image as..."</p>
+    
+    <div class="icon-container">
+        <h3>192x192 Icon</h3>
+        <canvas id="icon192" width="192" height="192"></canvas>
+        <br><button onclick="downloadIcon('icon192', 'icon-192.png')">Download 192x192</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>512x512 Icon</h3>
+        <canvas id="icon512" width="512" height="512"></canvas>
+        <br><button onclick="downloadIcon('icon512', 'icon-512.png')">Download 512x512</button>
+    </div>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3B82F6');
+            gradient.addColorStop(1, '#8B5CF6');
+            
+            // Draw background circle
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Draw document background
+            const docWidth = size * 0.45;
+            const docHeight = size * 0.53;
+            const docX = (size - docWidth) / 2;
+            const docY = size * 0.235;
+            
+            ctx.fillStyle = 'white';
+            ctx.roundRect(docX, docY, docWidth, docHeight, size * 0.03);
+            ctx.fill();
+            
+            // Draw document lines
+            ctx.fillStyle = '#E5E7EB';
+            const lineHeight = size * 0.015;
+            const lineSpacing = size * 0.03;
+            let currentY = docY + size * 0.04;
+            
+            // Header lines
+            ctx.fillRect(docX + size * 0.04, currentY, docWidth * 0.8, lineHeight * 0.5);
+            currentY += lineSpacing * 0.8;
+            ctx.fillRect(docX + size * 0.04, currentY, docWidth * 0.5, lineHeight * 0.4);
+            currentY += lineSpacing * 1.2;
+            
+            // Content lines
+            ctx.fillStyle = '#9CA3AF';
+            for(let i = 0; i < 6; i++) {
+                const width = docWidth * (0.6 + Math.random() * 0.3);
+                ctx.fillRect(docX + size * 0.04, currentY, width, lineHeight * 0.3);
+                currentY += lineSpacing * 0.7;
+            }
+            
+            // Total line
+            ctx.fillStyle = '#3B82F6';
+            ctx.fillRect(docX + docWidth * 0.6, currentY + lineSpacing, docWidth * 0.3, lineHeight * 0.4);
+            
+            // Draw R letter
+            ctx.fillStyle = '#3B82F6';
+            ctx.font = `bold ${size * 0.15}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('R', size/2, size * 0.66);
+        }
+        
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate icons when page loads
+        window.onload = function() {
+            // Add roundRect method if not available
+            if (!CanvasRenderingContext2D.prototype.roundRect) {
+                CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                    this.beginPath();
+                    this.moveTo(x + radius, y);
+                    this.lineTo(x + width - radius, y);
+                    this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                    this.lineTo(x + width, y + height - radius);
+                    this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                    this.lineTo(x + radius, y + height);
+                    this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                    this.lineTo(x, y + radius);
+                    this.quadraticCurveTo(x, y, x + radius, y);
+                    this.closePath();
+                };
+            }
+            
+            createIcon('icon192', 192);
+            createIcon('icon512', 512);
+        };
+    </script>
+</body>
+</html>

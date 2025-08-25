@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "@types/tailwindcss": "^3.0.11"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.56.0"
+  }
+}

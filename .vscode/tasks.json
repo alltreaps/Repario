@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+        "label": "Run Frontend",
+        "type": "shell",
+        "command": "npm run dev --prefix frontend"
+    },
+    {
+        "label": "Run Backend",
+        "type": "shell",
+        "command": "npm run dev --prefix backend"
+    },
+    {
+        "label": "Run Both",
+        "dependsOn": [
+            "Run Frontend",
+            "Run Backend"
+        ],
+        "dependsOrder": "parallel",
+        "problemMatcher": []
+    }
+]
+}
