@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -31,11 +31,22 @@ export function useSession() {
     error: null,
   });
 
+  // Concurrency protection
+  const loadingRef = useRef(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     let mounted = true;
 
     const loadSession = async () => {
+      // Prevent concurrent loading
+      if (loadingRef.current) {
+        console.log('Session loading already in progress, skipping...');
+        return;
+      }
+
       try {
+        loadingRef.current = true;
         setSessionData(prev => ({ ...prev, isLoading: true, error: null }));
 
         // Get current session
@@ -154,15 +165,32 @@ export function useSession() {
             error: error instanceof Error ? error.message : 'Unknown error occurred',
           }));
         }
+      } finally {
+        loadingRef.current = false;
       }
     };
 
-    // Load initial session
-    loadSession();
+    // Debounced session loader
+    const debouncedLoadSession = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        loadSession();
+      }, 300);
+    };
 
-    // Listen for auth changes
+    // Load initial session with debouncing
+    debouncedLoadSession();
+
+    // Listen for auth changes with debouncing
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log('Auth state change:', event);
       if (event === 'SIGNED_OUT') {
+        loadingRef.current = false;
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current);
+        }
         setSessionData({
           user: null,
           profile: null,
@@ -171,12 +199,16 @@ export function useSession() {
           error: null,
         });
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        loadSession();
+        debouncedLoadSession();
       }
     });
 
     return () => {
       mounted = false;
+      loadingRef.current = false;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
       subscription.unsubscribe();
     };
   }, []);
