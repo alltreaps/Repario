@@ -268,14 +268,22 @@ function UserManagementPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Phone
                 </label>
-                <input
-                  type="tel"
-                  required
-                  value={createForm.phone}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  placeholder="+1234567890"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400">+964</span>
+                  </div>
+                  <input
+                    type="tel"
+                    required
+                    value={createForm.phone.replace(/^\+964/, '')}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      setCreateForm(prev => ({ ...prev, phone: '+964' + value }));
+                    }}
+                    className="w-full pl-16 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="7XXXXXXXXX"
+                  />
+                </div>
               </div>
               
               <ActionIf ability="users.changeRole" fallback={
@@ -380,13 +388,21 @@ function UserManagementPage() {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Phone
                         </label>
-                        <input
-                          type="tel"
-                          required
-                          value={editForm.phone}
-                          onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        />
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-500 dark:text-gray-400">+964</span>
+                          </div>
+                          <input
+                            type="tel"
+                            required
+                            value={editForm.phone.replace(/^\+964/, '')}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^\d]/g, '');
+                              setEditForm(prev => ({ ...prev, phone: '+964' + value }));
+                            }}
+                            className="w-full pl-16 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          />
+                        </div>
                       </div>
                       
                       <ActionIf ability="users.changeRole" fallback={

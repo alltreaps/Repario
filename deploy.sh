@@ -6,6 +6,10 @@ VPS_PASS=WassupGOD12
 VPS_HOST=167.86.71.114
 ROOT=/var/www/repario
 
+# 0) Generate new version for this deployment
+echo "🔢 Generating new version..."
+node scripts/generate-version.js
+
 # 1) Build frontend & backend
 npm --prefix ./frontend run build
 npm --prefix ./backend run build

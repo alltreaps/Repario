@@ -115,6 +115,9 @@ export default function AppShell({ children }: AppShellProps) {
         if (pathname.startsWith('/invoices/edit/')) {
           return 'Edit Invoice'
         }
+        if (pathname.startsWith('/accounts/history/')) {
+          return currentLayoutName || 'Customer History'
+        }
         if (pathname.startsWith('/invoices')) {
           return 'Invoices'
         }
@@ -291,12 +294,14 @@ export default function AppShell({ children }: AppShellProps) {
               <div className="flex items-center min-w-0 flex-1">
                 <div className="flex-shrink-0 h-8 w-8">
                   {user?.logo_url ? (
-                    <img
-                      src={user.logo_url}
-                      alt="Profile"
-                      className="h-8 w-8 rounded-full object-cover border"
-                      onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-avatar.png'; }}
-                    />
+                    <div className="h-8 w-8 rounded-full overflow-hidden">
+                      <img
+                        src={user.logo_url}
+                        alt="Profile"
+                        className="h-8 w-8 object-cover"
+                        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-avatar.png'; }}
+                      />
+                    </div>
                   ) : (
                     <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
                       <span className="text-xs font-medium text-white">

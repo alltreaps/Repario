@@ -538,32 +538,32 @@ export default function LayoutDesignerPage() {
   return (
     <div className="min-h-screen text-slate-900 dark:text-slate-100">
       {/* Header */}
-      <div className=" p-6 hidden lg:block">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              {layout.name}
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-1 hidden md:flex items-center gap-4">
-              <span>{layout.sections.length} sections</span>
-              <span>•</span>
-              <span>{layout.sections.reduce((acc, section) => acc + section.fields.length, 0)} fields</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handleAddSection}
-              className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-all duration-200 flex items-center gap-2"
-            >
-              <PlusIcon className="w-4 h-4" />
-              Add Section
-            </button>
-            <button 
-              onClick={handleSaveLayout}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              Save Layout
-            </button>
+      <div className="p-6 hidden lg:block">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <div className="hidden md:block">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
+                {layout.name}
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
+                {layout.sections.length} sections • {layout.sections.reduce((acc, section) => acc + section.fields.length, 0)} fields
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleAddSection}
+                className="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+              >
+                <PlusIcon className="w-5 h-5" />
+                Add Section
+              </button>
+              <button 
+                onClick={handleSaveLayout}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+              >
+                Save Layout
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -573,14 +573,14 @@ export default function LayoutDesignerPage() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <button 
             onClick={handleAddSection}
-            className="w-full sm:w-auto px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
           >
-            <PlusIcon className="w-4 h-4" />
+            <PlusIcon className="w-5 h-5" />
             Add Section
           </button>
           <button 
             onClick={handleSaveLayout}
-            className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
             Save Layout
           </button>

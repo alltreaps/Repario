@@ -17,6 +17,7 @@ export interface Database {
           phone: string
           role: 'admin' | 'manager' | 'user'
           email: string
+          logo_url: string | null
           created_at: string
           updated_at: string
         }
@@ -27,6 +28,7 @@ export interface Database {
           phone: string
           role?: 'admin' | 'manager' | 'user'
           email: string
+          logo_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -37,6 +39,7 @@ export interface Database {
           phone?: string
           role?: 'admin' | 'manager' | 'user'
           email?: string
+          logo_url?: string | null
           created_at?: string
           updated_at?: string
         }

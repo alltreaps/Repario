@@ -333,6 +333,39 @@ export const fetchCustomers = async () => {
   return data
 }
 
+// =====================================================
+// USER MANAGEMENT (OPTIMIZED)
+// =====================================================
+
+export const fetchUsers = async () => {
+  // Use the backend API but with optimized caching
+  const session = await getCurrentSession()
+  if (!session?.access_token) {
+    throw new Error('Not authenticated')
+  }
+
+  const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include'
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  if (data.status === 'error') {
+    throw new Error(data.error)
+  }
+
+  return data.data
+}
+
 export const createCustomer = async (customer: Omit<CustomerInsert, 'user_id'>) => {
   const user = await getCurrentUser()
   if (!user) throw new Error('Not authenticated')
@@ -782,7 +815,7 @@ export const fetchInvoiceWithDetails = async (invoiceId: string): Promise<Invoic
 
 export const saveInvoice = async (invoice: {
   customer_id: string
-  layout_id: string
+  layout_id?: string | null
   form_data?: Record<string, unknown>
   totals: {
     subtotal: number
@@ -808,7 +841,7 @@ export const saveInvoice = async (invoice: {
     .insert({
       user_id: user.id,
       customer_id: invoice.customer_id,
-      layout_id: invoice.layout_id,
+      layout_id: invoice.layout_id || null,
       form_data: invoice.form_data || null,
       totals: invoice.totals,
       // If provided, include status; otherwise DB default ('pending') will be used
@@ -841,7 +874,7 @@ export const saveInvoice = async (invoice: {
 
 export const updateInvoice = async (id: string, updates: {
   customer_id?: string
-  layout_id?: string
+  layout_id?: string | null
   form_data?: Record<string, unknown>
   totals?: {
     subtotal: number
@@ -934,4 +967,12 @@ export const updateInvoiceItems = async (invoiceId: string, items: Array<{
   
   if (error) throw error
   return data
+}
+
+// Get customer invoice history and timeline
+export const fetchCustomerHistory = async (customerId: string) => {
+  console.log('📊 Fetching customer history for:', customerId)
+  const response = await api.get(`/customers/${customerId}/history`)
+  console.log('✅ Customer history fetched:', response.data)
+  return response.data
 }

@@ -293,35 +293,27 @@ const requireAdmin = asyncHandler(async (req: any, res: Response, next: NextFunc
 // List all users in the business (admin only)
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req: any, res: Response): Promise<void> => {
   try {
-    // Get the admin user's business_id
-    const { data: adminProfile, error: adminError } = await supabase
-      .from('profiles')
-      .select('business_id')
-      .eq('id', req.user.userId)
-      .single();
-
-    if (adminError || !adminProfile) {
-      res.status(500).json({ 
-        status: 'error',
-        error: 'Failed to get admin profile' 
-      });
-      return;
-    }
-
-    // Get all users in the same business
+    console.log('📋 Fetching users list for admin:', req.user.userId);
+    
+    // Use optimized function that combines both queries
+    console.log('🔍 Calling get_business_users_for_admin with admin_user_id:', req.user.userId);
     const { data: users, error: usersError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, phone, role, created_at, updated_at')
-      .eq('business_id', adminProfile.business_id)
-      .order('created_at', { ascending: false });
+      .rpc('get_business_users_for_admin', { 
+        admin_user_id: req.user.userId 
+      });
 
     if (usersError) {
+      console.error('❌ Failed to fetch users:', usersError);
+      console.error('❌ Error details:', JSON.stringify(usersError, null, 2));
       res.status(500).json({ 
         status: 'error',
         error: `Failed to fetch users: ${usersError.message}` 
       });
       return;
     }
+
+    console.log('✅ Users found:', users?.length || 0, 'users');
+    console.log('📊 Users data:', JSON.stringify(users, null, 2));
 
     res.json({ 
       status: 'success',
@@ -342,6 +334,10 @@ app.put('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req:
   try {
     const { userId } = req.params;
     const { full_name, phone, role } = req.body;
+    
+    console.log('🔄 Updating user - User ID:', userId);
+    console.log('📝 Update data:', req.body);
+    console.log('👤 Admin user:', req.user.userId);
 
     if (!userId) {
       res.status(400).json({ 
@@ -413,6 +409,7 @@ app.put('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req:
     if (role !== undefined) updates.role = role;
 
     // Update the user profile
+    console.log('📊 Applying updates:', updates);
     const { data: updatedUser, error: updateError } = await supabase
       .from('profiles')
       .update(updates)
@@ -421,6 +418,7 @@ app.put('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req:
       .single();
 
     if (updateError) {
+      console.error('❌ Failed to update user:', updateError);
       res.status(500).json({ 
         status: 'error',
         error: `Failed to update user: ${updateError.message}` 
@@ -428,6 +426,7 @@ app.put('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req:
       return;
     }
 
+    console.log('✅ User updated successfully:', updatedUser);
     res.json({ 
       status: 'success',
       data: updatedUser,
@@ -446,10 +445,14 @@ app.put('/api/admin/users/:userId', authenticateToken, requireAdmin, async (req:
 // Create a new user (admin only)
 app.post('/api/admin/users', authenticateToken, requireAdmin, async (req: any, res: Response): Promise<void> => {
   try {
+    console.log('📝 Creating user - Request body:', req.body);
+    console.log('👤 Admin user info:', req.user);
+    
     const { email, password, full_name, phone, role } = req.body;
 
     // Validate required fields
     if (!email || !password || !full_name || !phone || !role) {
+      console.log('❌ Missing required fields:', { email: !!email, password: !!password, full_name: !!full_name, phone: !!phone, role: !!role });
       res.status(400).json({ 
         status: 'error',
         error: 'All fields are required: email, password, full_name, phone, role' 
@@ -467,6 +470,139 @@ app.post('/api/admin/users', authenticateToken, requireAdmin, async (req: any, r
     }
 
     // Get the admin user's business_id
+    console.log('🔍 Fetching admin profile for user ID:', req.user.userId);
+    const { data: adminProfile, error: adminError } = await supabase
+      .from('profiles')
+      .select('business_id')
+      .eq('id', req.user.userId)
+      .single();
+
+    if (adminError || !adminProfile) {
+      console.error('❌ Failed to get admin profile:', adminError);
+      res.status(500).json({ 
+        status: 'error',
+        error: 'Failed to get admin profile' 
+      });
+      return;
+    }
+    
+    console.log('✅ Admin profile found:', adminProfile);
+
+    // Create user in Supabase Auth using service role
+    console.log('👤 Creating auth user with data:', { email, role, business_id: adminProfile.business_id });
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name,
+        phone,
+        role,
+        business_id: adminProfile.business_id
+      }
+    });
+
+    if (authError || !authUser.user) {
+      console.error('❌ Failed to create auth user:', authError);
+      res.status(500).json({ 
+        status: 'error',
+        error: `Failed to create auth user: ${authError?.message}` 
+      });
+      return;
+    }
+    
+    console.log('✅ Auth user created:', authUser.user.id);
+
+    // Insert or update profile record (using upsert to handle auto-created profiles)
+    console.log('📝 Creating/updating profile record for user:', authUser.user.id);
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: authUser.user.id,
+        business_id: adminProfile.business_id,
+        full_name,
+        phone,
+        role,
+        email
+      }, {
+        onConflict: 'id'
+      });
+
+    if (profileError) {
+      console.error('❌ Failed to create user profile:', profileError);
+      // Clean up auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(authUser.user.id);
+      res.status(500).json({ 
+        status: 'error',
+        error: `Failed to create user profile: ${profileError.message}` 
+      });
+      return;
+    }
+    
+    console.log('✅ Profile record created successfully');
+
+    res.status(201).json({ 
+      status: 'success',
+      message: 'User created successfully' 
+    });
+
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ 
+      status: 'error',
+      error: 'Internal server error' 
+    });
+  }
+});
+
+// Deactivate/Activate a user (admin only)
+app.patch('/api/admin/users/:userId/status', authenticateToken, requireAdmin, async (req: any, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { is_active } = req.body;
+
+    if (!userId) {
+      res.status(400).json({ 
+        status: 'error',
+        error: 'User ID is required' 
+      });
+      return;
+    }
+
+    if (typeof is_active !== 'boolean') {
+      res.status(400).json({ 
+        status: 'error',
+        error: 'is_active must be a boolean value' 
+      });
+      return;
+    }
+
+    console.log('🔄 Updating user status - User ID:', userId, 'Active:', is_active);
+    console.log('👤 Admin user:', req.user.userId);
+
+    // Check if user exists and belongs to the same business
+    const { data: userProfile, error: userError } = await supabase
+      .from('profiles')
+      .select('business_id, is_active, full_name')
+      .eq('id', userId)
+      .single();
+
+    if (userError) {
+      if (userError.code === 'PGRST116') {
+        res.status(404).json({ 
+          status: 'error',
+          error: 'User not found' 
+        });
+        return;
+      }
+      res.status(500).json({ 
+        status: 'error',
+        error: `Failed to find user: ${userError.message}` 
+      });
+      return;
+    }
+
+    // Get admin's business_id
     const { data: adminProfile, error: adminError } = await supabase
       .from('profiles')
       .select('business_id')
@@ -481,56 +617,53 @@ app.post('/api/admin/users', authenticateToken, requireAdmin, async (req: any, r
       return;
     }
 
-    // Create user in Supabase Auth using service role
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name,
-        phone,
-        role,
-        business_id: adminProfile.business_id
-      }
-    });
-
-    if (authError || !authUser.user) {
-      res.status(500).json({ 
+    // Check if user belongs to the same business
+    if (userProfile.business_id !== adminProfile.business_id) {
+      res.status(403).json({ 
         status: 'error',
-        error: `Failed to create auth user: ${authError?.message}` 
+        error: 'Cannot modify user from different business' 
       });
       return;
     }
 
-    // Insert profile record
-    const { error: profileError } = await supabase
+    // Prevent self-deactivation
+    if (userId === req.user.userId && !is_active) {
+      res.status(400).json({ 
+        status: 'error',
+        error: 'Cannot deactivate your own account' 
+      });
+      return;
+    }
+
+    // Update user status
+    const { data: updatedUser, error: updateError } = await supabase
       .from('profiles')
-      .insert({
-        id: authUser.user.id,
-        business_id: adminProfile.business_id,
-        full_name,
-        phone,
-        role,
-        email
-      });
+      .update({ 
+        is_active,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', userId)
+      .select('id, email, full_name, phone, role, is_active, created_at, updated_at')
+      .single();
 
-    if (profileError) {
-      // Clean up auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authUser.user.id);
+    if (updateError) {
+      console.error('❌ Failed to update user status:', updateError);
       res.status(500).json({ 
         status: 'error',
-        error: `Failed to create user profile: ${profileError.message}` 
+        error: `Failed to update user status: ${updateError.message}` 
       });
       return;
     }
 
-    res.status(201).json({ 
+    console.log('✅ User status updated successfully:', updatedUser);
+    res.json({ 
       status: 'success',
-      message: 'User created successfully' 
+      data: updatedUser,
+      message: `User ${is_active ? 'activated' : 'deactivated'} successfully` 
     });
 
   } catch (error) {
-    console.error('Create user error:', error);
+    console.error('Update user status error:', error);
     res.status(500).json({ 
       status: 'error',
       error: 'Internal server error' 
@@ -1918,7 +2051,7 @@ interface InvoiceItem {
 
 interface InvoiceRequest {
   customerInfo: CustomerInfo;
-  layoutId: string;
+  layoutId: string | null;
   formData: Record<string, string | string[]>;
   items: InvoiceItem[];
   status?: InvoiceStatus;
@@ -1961,8 +2094,7 @@ const validateInvoiceRequest = (data: any): data is InvoiceRequest => {
     data &&
     typeof data === 'object' &&
     validateCustomerInfo(data.customerInfo) &&
-    typeof data.layoutId === 'string' &&
-    data.layoutId.trim().length > 0 &&
+    (data.layoutId === null || data.layoutId === undefined || (typeof data.layoutId === 'string' && data.layoutId.trim().length > 0)) &&
     typeof data.formData === 'object' &&
     Array.isArray(data.items) &&
     data.items.length > 0 &&
@@ -2264,7 +2396,12 @@ const findOrCreateCustomer = async (customerInfo: CustomerInfo & { id?: string }
 };
 
 // Verify layout ownership
-const verifyLayoutOwnership = async (layoutId: string, userId: string): Promise<boolean> => {
+const verifyLayoutOwnership = async (layoutId: string | null, userId: string): Promise<boolean> => {
+  // If no layout is provided, it's valid (layouts are optional)
+  if (!layoutId) {
+    return true;
+  }
+  
   try {
     const { data: layout, error } = await supabase
       .from('layouts')
@@ -3263,7 +3400,9 @@ app.patch('/api/invoices/:id/status', authenticateToken, async (req: any, res: R
       if (setting.allow_extra_note && trimmedExtra) {
         message = `${message}\n\n${trimmedExtra}`;
       }
-      whatsappResult = await sendWhatsAppMessage(customerPhone, message);
+      // Ensure phone number has +964 prefix
+      const formattedPhone = customerPhone.startsWith('+964') ? customerPhone : '+964' + customerPhone.replace(/^\+/, '');
+      whatsappResult = await sendWhatsAppMessage(formattedPhone, message);
     }
 
     res.json({ invoice: updated, whatsapp: whatsappResult });
@@ -3491,6 +3630,138 @@ app.delete('/api/customers/:id', authenticateToken, async (req: any, res: Respon
     res.status(204).send();
   } catch (error) {
     console.error('💥 Customer deletion error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get customer invoice history with status changes
+app.get('/api/customers/:customerId/history', authenticateToken, async (req: any, res: Response): Promise<void> => {
+  try {
+    const { customerId } = req.params;
+    const userId = req.user.userId;
+
+    console.log('📊 Fetching customer history for:', customerId);
+
+    // Verify customer belongs to user
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('id, name')
+      .eq('id', customerId)
+      .eq('user_id', userId)
+      .single();
+
+    if (customerError || !customer) {
+      console.error('❌ Customer not found or access denied:', customerError);
+      res.status(404).json({ error: 'Customer not found' });
+      return;
+    }
+
+    // Fetch invoices with status history and items
+    const { data: invoices, error: invoicesError } = await supabase
+      .from('invoices')
+      .select(`
+        id,
+        status,
+        totals,
+        created_at,
+        updated_at,
+        invoice_items (
+          id,
+          name,
+          quantity,
+          price,
+          total
+        ),
+        invoice_status_history (
+          id,
+          status,
+          message,
+          extra_note,
+          created_at
+        )
+      `)
+      .eq('customer_id', customerId)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (invoicesError) {
+      console.error('❌ Error fetching customer invoices:', invoicesError);
+      res.status(500).json({ error: 'Failed to fetch customer history' });
+      return;
+    }
+
+    // Create a timeline of all events (invoice creation + status changes)
+    const timeline: any[] = [];
+
+    invoices?.forEach(invoice => {
+      // Calculate total from invoice items if totals are zero or missing
+      const itemsTotal = invoice.invoice_items?.reduce((sum: number, item: any) => sum + (item.total || 0), 0) || 0;
+      const storedTotal = invoice.totals?.grand_total || invoice.totals?.subtotal || 0;
+      
+      // Use items total if stored total is zero, otherwise use stored total
+      const totalAmount = storedTotal > 0 ? storedTotal : itemsTotal;
+      
+      // Debug: log the calculation
+      console.log('🔍 Invoice total calculation:', {
+        invoice_id: invoice.id,
+        stored_total: storedTotal,
+        items_total: itemsTotal,
+        final_total: totalAmount,
+        items_count: invoice.invoice_items?.length || 0
+      });
+      
+      // Add invoice creation event
+      timeline.push({
+        type: 'invoice_created',
+        invoice_id: invoice.id,
+        status: 'pending', // Initial status
+        amount: totalAmount,
+        date: invoice.created_at,
+        message: 'Invoice created'
+      });
+
+      // Add all status change events from history
+      invoice.invoice_status_history?.forEach((statusChange: any) => {
+        timeline.push({
+          type: 'status_change',
+          invoice_id: invoice.id,
+          status: statusChange.status,
+          amount: totalAmount,
+          date: statusChange.created_at,
+          message: statusChange.message || `Status changed to ${statusChange.status}`,
+          extra_note: statusChange.extra_note
+        });
+      });
+    });
+
+    // Sort timeline by date (most recent first)
+    timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    console.log('✅ Customer history fetched successfully:', {
+      customer: customer.name,
+      invoices: invoices?.length || 0,
+      timeline_events: timeline.length,
+      sample_invoice_totals: invoices?.[0]?.totals,
+      total_amount_calculated: invoices?.reduce((sum, i) => sum + (i.totals?.grand_total || 0), 0) || 0
+    });
+
+    res.json({
+      customer,
+      invoices: invoices || [],
+      timeline,
+      stats: {
+        total_invoices: invoices?.length || 0,
+        refused_invoices: invoices?.filter(i => i.status === 'refused').length || 0,
+        completed_invoices: invoices?.filter(i => i.status === 'done').length || 0,
+        total_amount: invoices?.reduce((sum, i) => {
+          const itemsTotal = i.invoice_items?.reduce((itemSum: number, item: any) => itemSum + (item.total || 0), 0) || 0;
+          const storedTotal = i.totals?.grand_total || i.totals?.subtotal || 0;
+          return sum + (storedTotal > 0 ? storedTotal : itemsTotal);
+        }, 0) || 0
+      }
+    });
+  } catch (error) {
+    console.error('💥 Customer history error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

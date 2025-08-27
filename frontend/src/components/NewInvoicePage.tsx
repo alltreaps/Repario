@@ -13,6 +13,8 @@ import {
 } from '@heroicons/react/24/solid'
 import { useParams, useNavigate } from 'react-router-dom'
 import { fetchLayouts, fetchItems, fetchCustomers, fetchLayoutDeep, api } from '../lib/api'
+import { getStatusMessageTemplates } from '../lib/whatsapp'
+import WhatsAppMessagePopup from './WhatsAppMessagePopup'
 import type { Layout, Field, FieldType, Item, InvoiceItem } from '../types'
 
 export default function NewInvoicePage() {
@@ -54,6 +56,17 @@ export default function NewInvoicePage() {
   const [existingInvoice, setExistingInvoice] = useState<any>(null)
   // New: invoice status
   const [status, setStatus] = useState<string>('pending')
+  // WhatsApp popup state
+  const [showWhatsAppPopup, setShowWhatsAppPopup] = useState(false)
+  const [whatsAppPopupData, setWhatsAppPopupData] = useState<{
+    customerName: string
+    customerPhone: string
+    invoiceId: string
+    status: string
+    statusTemplate: string
+    allowExtraNote: boolean
+  } | null>(null)
+  const [statusTemplates, setStatusTemplates] = useState<Record<string, { message: string; allowExtraNote: boolean; sendWhatsApp: boolean }>>({})
 
   // Reset form state when switching between edit and new invoice modes
   useEffect(() => {
@@ -157,6 +170,17 @@ export default function NewInvoicePage() {
         )] as string[]
         setAvailableCategories(uniqueCategories)
         
+        // Load WhatsApp status templates
+        console.log('🌐 Loading WhatsApp status templates...')
+        try {
+          const templates = await getStatusMessageTemplates()
+          setStatusTemplates(templates)
+          console.log('✅ WhatsApp templates loaded:', Object.keys(templates).length)
+        } catch (err) {
+          console.error('❌ Error loading WhatsApp templates:', err)
+          // Don't show error to user as this is not critical
+        }
+        
         // If in edit mode, fetch existing invoice data
         if (isEditMode && invoiceId) {
           console.log('🔄 Edit mode detected, fetching invoice:', invoiceId)
@@ -221,8 +245,8 @@ export default function NewInvoicePage() {
           id: item.id || Date.now().toString(),
           name: item.name || '',
           quantity: item.quantity || 1,
-          price: item.unit_price || 0,
-          total: (item.quantity || 1) * (item.unit_price || 0)
+          price: item.price || 0,
+          total: item.total || ((item.quantity || 1) * (item.price || 0))
         }))
         setItems(parsedItems)
         console.log('📦 Invoice items set:', parsedItems)
@@ -602,19 +626,42 @@ export default function NewInvoicePage() {
       
       if (response.data?.invoice) {
         console.log(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully:`, response.data.invoice)
-        alert(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully! Invoice ID: ${response.data.invoice.id}`)
+        const savedInvoice = response.data.invoice
+        
+        // Check if we should show WhatsApp popup based on status
+        const statusTemplate = statusTemplates[status]
+        if (statusTemplate && statusTemplate.sendWhatsApp && statusTemplate.message && customerInfo.phone) {
+          // Show WhatsApp popup
+          setWhatsAppPopupData({
+            customerName: customerInfo.name,
+            customerPhone: customerInfo.phone,
+            invoiceId: savedInvoice.id,
+            status: status,
+            statusTemplate: statusTemplate.message,
+            allowExtraNote: true // Always allow extra notes for new/edited invoices
+          })
+          setShowWhatsAppPopup(true)
+        } else {
+          // Show success message if no WhatsApp popup
+          alert(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully! Invoice ID: ${savedInvoice.id}`)
+        }
         
         if (isEditMode) {
-          // Navigate back to history after successful edit
-          navigate('/invoices/history')
+          // Navigate back to history after successful edit (or after WhatsApp popup closes)
+          if (!statusTemplate?.sendWhatsApp || !statusTemplate?.message || !customerInfo.phone) {
+            navigate('/invoices/history')
+          }
         } else {
-          // Reset form after successful save
-          setCustomerInfo({ name: '', phone: '', address: '' })
-          setSelectedCustomerId(null)
-          setIsCustomerFromSuggestion(false)
-          setForceCreateCustomer(false)
-          setInvoiceData({})
-          setItems([])
+          // Reset form after successful save (or after WhatsApp popup closes)
+          if (!statusTemplate?.sendWhatsApp || !statusTemplate?.message || !customerInfo.phone) {
+            setCustomerInfo({ name: '', phone: '', address: '' })
+            setSelectedCustomerId(null)
+            setIsCustomerFromSuggestion(false)
+            setForceCreateCustomer(false)
+            setInvoiceData({})
+            setItems([])
+            setStatus('pending')
+          }
         }
       } else {
         throw new Error('Invalid response format from server')
@@ -923,14 +970,24 @@ export default function NewInvoicePage() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Phone Number <span className="text-red-500">*</span>
               </label>
-              <input
-                type="tel"
-                value={customerInfo.phone}
-                onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter phone number"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-slate-500 dark:text-slate-400">+964</span>
+                </div>
+                <input
+                  type="tel"
+                  value={customerInfo.phone.replace(/^\+964/, '')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+                    handleCustomerInfoChange('phone', '+964' + value);
+                  }}
+                  className="w-full pl-16 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="7XXXXXXXXX"
+                  pattern="[0-9]{10}"
+                  title="Phone number must be exactly 10 digits"
+                  required
+                />
+              </div>
             </div>
 
             <div>
@@ -1196,9 +1253,6 @@ export default function NewInvoicePage() {
 
         {/* Action Buttons - Always show for invoice creation */}
         <div className="flex flex-col sm:flex-row justify-end gap-4 mb-8">
-          <button className="px-8 py-3 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
-            Save as Draft
-          </button>
           <button 
             onClick={handleSaveInvoice}
             className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
@@ -1419,6 +1473,42 @@ export default function NewInvoicePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* WhatsApp Message Popup */}
+      {showWhatsAppPopup && whatsAppPopupData && (
+        <WhatsAppMessagePopup
+          isOpen={showWhatsAppPopup}
+          onClose={() => {
+            setShowWhatsAppPopup(false)
+            setWhatsAppPopupData(null)
+            
+            // Show success message after popup closes
+            alert(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully! Invoice ID: ${whatsAppPopupData.invoiceId}`)
+            
+            if (isEditMode) {
+              navigate('/invoices/history')
+            } else {
+              // Reset form after successful save
+              setCustomerInfo({ name: '', phone: '', address: '' })
+              setSelectedCustomerId(null)
+              setIsCustomerFromSuggestion(false)
+              setForceCreateCustomer(false)
+              setInvoiceData({})
+              setItems([])
+              setStatus('pending')
+            }
+          }}
+          customerName={whatsAppPopupData.customerName}
+          customerPhone={whatsAppPopupData.customerPhone}
+          invoiceId={whatsAppPopupData.invoiceId}
+          status={whatsAppPopupData.status}
+          statusTemplate={whatsAppPopupData.statusTemplate}
+          allowExtraNote={whatsAppPopupData.allowExtraNote}
+          onSend={() => {
+            console.log('WhatsApp message sent for invoice:', whatsAppPopupData.invoiceId)
+          }}
+        />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { api } from './api';
+import { api, fetchUsers as apiFetchUsers } from './api';
 import type { 
   UserListItem, 
   CreateUserRequest, 
@@ -8,20 +8,46 @@ import type {
 } from '../types/user-management';
 
 /**
- * List all users in the current business (RLS auto-scopes to current business)
+ * List all users in the current business using optimized direct Supabase query
+ */
+export async function fetchUsers(): Promise<UserListItem[]> {
+  return apiFetchUsers() as Promise<UserListItem[]>;
+}
+
+/**
+ * Deactivate or activate a user (requires admin privileges)
+ */
+export async function toggleUserStatus(userId: string, isActive: boolean): Promise<void> {
+  try {
+    const response = await api.patch(`/admin/users/${userId}/status`, { is_active: isActive });
+    
+    if (response.data.status === 'error') {
+      throw new Error(response.data.error);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Unknown error occurred while updating user status');
+  }
+}
+
+/**
+ * List all users in the current business using backend API (legacy - slower)
  */
 export async function listUsers(): Promise<UserListItem[]> {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, phone, role, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      const userError: UserManagementError = new Error(`Failed to list users: ${error.message}`);
-      userError.code = error.code;
-      throw userError;
+    const response = await api.get('/admin/users');
+    
+    if (response.data.status === 'error') {
+      throw new Error(response.data.error);
     }
+
+    const data = response.data.data;
+    console.log('Users data with logo_url:', data?.map((user: any) => ({ 
+      name: user.full_name, 
+      logo_url: user.logo_url 
+    })));
 
     return data as UserListItem[];
   } catch (error) {
@@ -54,24 +80,16 @@ export async function createUser(userData: CreateUserRequest): Promise<void> {
 }
 
 /**
- * Update user profile information (requires admin privileges per RLS)
+ * Update a user profile (requires admin privileges)
  */
 export async function updateUserProfile(updates: UpdateUserProfileRequest): Promise<void> {
   try {
     const { id, ...updateData } = updates;
     
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        ...updateData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (error) {
-      const userError: UserManagementError = new Error(`Failed to update user profile: ${error.message}`);
-      userError.code = error.code;
-      throw userError;
+    const response = await api.put(`/admin/users/${id}`, updateData);
+    
+    if (response.data.status === 'error') {
+      throw new Error(response.data.error);
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -109,7 +127,7 @@ export async function getUserById(userId: string): Promise<UserListItem | null> 
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, email, full_name, phone, role, created_at')
+      .select('id, email, full_name, phone, role, logo_url, created_at')
       .eq('id', userId)
       .single();
 

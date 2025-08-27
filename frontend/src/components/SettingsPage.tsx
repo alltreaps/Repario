@@ -9,6 +9,7 @@ import {
   ShieldExclamationIcon,
 } from '@heroicons/react/24/solid';
 import { Can } from './Can';
+import { getVersion } from '../version';
 
 const SettingsPage: React.FC = () => {
   
@@ -27,19 +28,14 @@ const SettingsPage: React.FC = () => {
 
   // Notifications & Messaging
   const [whatsappApiKey, setWhatsappApiKey] = React.useState('');
-  const [smsApiKey, setSmsApiKey] = React.useState('');
   const [statusMessages, setStatusMessages] = React.useState({
     pending: '',
     working: '',
     done: '',
     refused: '',
   });
-  const [statusExtraMsg, setStatusExtraMsg] = React.useState({
-    pending: false,
-    working: false,
-    done: false,
-    refused: false,
-  });
+  const [loadingStatusMessages, setLoadingStatusMessages] = React.useState(true);
+  const [statusMessagesError, setStatusMessagesError] = React.useState<string | null>(null);
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -70,6 +66,47 @@ const SettingsPage: React.FC = () => {
     }
   }, [user, authLoading]);
 
+  // Fetch status messages on mount
+  useEffect(() => {
+    async function fetchStatusMessages() {
+      setLoadingStatusMessages(true);
+      setStatusMessagesError(null);
+      if (!user) {
+        setStatusMessagesError('User not logged in.');
+        setLoadingStatusMessages(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('invoice_status_settings')
+        .select('status, default_message, allow_extra_note')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        setStatusMessagesError('Failed to load status messages.');
+      } else if (data) {
+        const messages: any = {};
+        
+        // Initialize with empty values
+        ['pending', 'working', 'done', 'refused'].forEach(status => {
+          messages[status] = '';
+        });
+        
+        // Fill with database values
+        data.forEach(setting => {
+          messages[setting.status] = setting.default_message || '';
+        });
+        
+        setStatusMessages(messages);
+      }
+      setLoadingStatusMessages(false);
+    }
+    
+    if (!authLoading) {
+      fetchStatusMessages();
+    }
+  }, [user, authLoading]);
+
   // Save profile changes
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +128,37 @@ const SettingsPage: React.FC = () => {
   else alert('Error changing password');
   };
 
-  // Save notification settings (unchanged)
-  const handleNotifSave = (e: React.FormEvent) => { e.preventDefault(); alert('Notification settings saved!'); };
+  // Save status messages to database
+  const handleNotifSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    
+    try {
+      // Prepare data for upsert
+      const statusSettings = ['pending', 'working', 'done', 'refused'].map(status => ({
+        user_id: user.id,
+        status,
+        default_message: statusMessages[status as keyof typeof statusMessages],
+        allow_extra_note: false, // Default to false
+        send_whatsapp: true // Default to true
+      }));
+      
+      // Upsert status settings
+      const { error } = await supabase
+        .from('invoice_status_settings')
+        .upsert(statusSettings, {
+          onConflict: 'user_id,status'
+        });
+      
+      if (error) {
+        alert('Error saving status messages: ' + error.message);
+      } else {
+        alert('Status messages saved successfully!');
+      }
+    } catch (error) {
+      alert('Error saving status messages');
+    }
+  };
 
   // Logo upload handler (upload to Supabase Storage)
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,12 +216,14 @@ const SettingsPage: React.FC = () => {
                   style={{ background: logoUrl ? 'transparent' : 'rgba(255,255,255,0.6)', backdropFilter: logoUrl ? undefined : 'blur(8px)' }}
                 >
                   {logoUrl ? (
-                    <img
-                      src={logoUrl}
-                      alt="Shop Logo"
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border"
-                      onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-avatar.png'; }}
-                    />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
+                      <img
+                        src={logoUrl}
+                        alt="Shop Logo"
+                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover"
+                        onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-avatar.png'; }}
+                      />
+                    </div>
                   ) : (
                     <>
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-200 flex items-center justify-center text-2xl text-slate-400">?</div>
@@ -172,7 +240,21 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
-                  <input type="tel" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-slate-500 dark:text-slate-400">+964</span>
+                    </div>
+                    <input 
+                      type="tel" 
+                      className="w-full pl-16 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                      value={phone.replace(/^\+964/, '')} 
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '');
+                        setPhone('+964' + value);
+                      }} 
+                      placeholder="7XXXXXXXXX" 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,15 +295,16 @@ const SettingsPage: React.FC = () => {
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">WhatsApp Messages</h2>
           </div>
+          {loadingStatusMessages ? (
+            <div className="text-slate-500 dark:text-slate-400">Loading status messages...</div>
+          ) : statusMessagesError ? (
+            <div className="text-red-600 dark:text-red-400">{statusMessagesError}</div>
+          ) : (
           <form onSubmit={handleNotifSave} className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="mb-4 sm:mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">WhatsApp API Key</label>
                 <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={whatsappApiKey} onChange={e => setWhatsappApiKey(e.target.value)} placeholder="WhatsApp API Key" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">SMS API Key</label>
-                <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={smsApiKey} onChange={e => setSmsApiKey(e.target.value)} placeholder="SMS API Key" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -242,25 +325,20 @@ const SettingsPage: React.FC = () => {
                   }
                 >
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 capitalize">{status} message</label>
-                  <textarea className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2" rows={2} value={statusMessages[status as keyof typeof statusMessages]} onChange={e => setStatusMessages(m => ({...m, [status]: e.target.value}))} placeholder={`Message for ${status}`}/>
-                  <div className="flex items-center">
-                    <input type="checkbox" id={`extraMsg-${status}`} checked={statusExtraMsg[status as keyof typeof statusExtraMsg]} onChange={e => setStatusExtraMsg(m => ({...m, [status]: e.target.checked}))} className="mr-2" />
-                    <label htmlFor={`extraMsg-${status}`}>Allow extra customer message</label>
-                  </div>
+                  <textarea className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={2} value={statusMessages[status as keyof typeof statusMessages]} onChange={e => setStatusMessages(m => ({...m, [status]: e.target.value}))} placeholder={`Message for ${status}`}/>
                 </div>
               ))}
             </div>
             <button type="submit" className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold">Save Messages Settings</button>
           </form>
+          )}
         </section>
         </Can>
 
-        {/* System & App */}
+        {/* App Version & Support */}
         <div className="mb-6 md:mb-8">
-          <div className="p-4 bg-gray-50 dark:bg-gray-900">
-            <div className="flex items-center gap-2 mb-2">
-            </div>
-            <div className="mb-2 text-slate-700 dark:text-slate-300">Version: <span className="font-mono">1.0.0</span></div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="mb-2 text-slate-700 dark:text-slate-300">Version: <span className="font-mono">{getVersion()}</span></div>
             <div className="mb-2 text-slate-700 dark:text-slate-300">Need help? <a href="mailto:support@repario.app" className="text-blue-600 underline">Contact Support</a></div>
           </div>
         </div>

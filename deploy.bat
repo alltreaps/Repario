@@ -1,6 +1,10 @@
 @echo off
 echo 🚀 Starting Repario deployment...
 
+REM Generate new version for this deployment
+echo 🔢 Generating new version...
+node scripts\generate-version.js
+
 REM Build frontend
 echo 📦 Building frontend...
 cd frontend

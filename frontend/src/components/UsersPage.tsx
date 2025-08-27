@@ -5,15 +5,15 @@ import {
   UserGroupIcon,
   CheckCircleIcon,
   UserIcon,
-  BoltIcon,
-  EyeIcon,
+  ShieldCheckIcon,
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon
 } from '@heroicons/react/24/solid'
-import { listUsers, createUser, updateUserProfile, deleteUser } from '../lib/user-management'
+import { fetchUsers, createUser, updateUserProfile, deleteUser, toggleUserStatus } from '../lib/user-management'
 import type { UserListItem, CreateUserRequest, UpdateUserProfileRequest } from '../types/user-management'
 import RequireRole from './RequireRole'
+import UserAvatar from './UserAvatar'
 
 // Update type for partial updates
 type UpdateUserData = Omit<UpdateUserProfileRequest, 'id'>
@@ -55,11 +55,12 @@ function UserDrawer({ user, isOpen, onClose }: UserDrawerProps) {
         <div className="p-6 space-y-6">
           {/* Avatar and Name */}
           <div className="text-center">
-            <div className="inline-flex h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 items-center justify-center mb-4">
-              <span className="text-xl font-bold text-white">
-                {user.full_name.split(' ').map((n: string) => n.charAt(0)).join('')}
-              </span>
-            </div>
+            <UserAvatar 
+              logoUrl={user.logo_url}
+              fullName={user.full_name}
+              size="xl"
+              className="mb-4"
+            />
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{user.full_name}</h3>
             <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full mt-2 ${
               user.role === 'admin' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
@@ -99,11 +100,13 @@ interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (userId: string, data: UpdateUserData) => Promise<void>
+  onToggleStatus: (userId: string, isActive: boolean) => Promise<void>
 }
 
-function EditUserModal({ user, isOpen, onClose, onSave }: EditUserModalProps) {
+function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUserModalProps) {
   const [formData, setFormData] = useState<UpdateUserData>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -127,6 +130,20 @@ function EditUserModal({ user, isOpen, onClose, onSave }: EditUserModalProps) {
       console.error('Failed to update user:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleToggleStatus = async () => {
+    if (!user) return
+
+    setIsTogglingStatus(true)
+    try {
+      await onToggleStatus(user.id, !user.is_active)
+      onClose()
+    } catch (error) {
+      console.error('Failed to toggle user status:', error)
+    } finally {
+      setIsTogglingStatus(false)
     }
   }
 
@@ -163,12 +180,21 @@ function EditUserModal({ user, isOpen, onClose, onSave }: EditUserModalProps) {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Phone
               </label>
-              <input
-                type="tel"
-                value={formData.phone || ''}
-                onChange={(e) => setFormData((prev: UpdateUserData) => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-slate-500 dark:text-slate-400">+964</span>
+                </div>
+                <input
+                  type="tel"
+                  value={(formData.phone || '').replace(/^\+964/, '')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d]/g, '');
+                    setFormData((prev: UpdateUserData) => ({ ...prev, phone: '+964' + value }));
+                  }}
+                  className="w-full pl-16 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  placeholder="7XXXXXXXXX"
+                />
+              </div>
             </div>
 
             <div>
@@ -186,21 +212,41 @@ function EditUserModal({ user, isOpen, onClose, onSave }: EditUserModalProps) {
               </select>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4">
+              {/* Status Toggle Button */}
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-medium transition-colors"
+                onClick={handleToggleStatus}
+                disabled={isTogglingStatus}
+                className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
+                  user.is_active 
+                    ? 'bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white'
+                    : 'bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white'
+                }`}
               >
-                Cancel
+                {isTogglingStatus 
+                  ? (user.is_active ? 'Deactivating...' : 'Activating...')
+                  : (user.is_active ? 'Deactivate User' : 'Activate User')
+                }
               </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
-              >
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </button>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
+                >
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -300,13 +346,22 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Phone *
               </label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData((prev: CreateUserRequest) => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-slate-500 dark:text-slate-400">+964</span>
+                </div>
+                <input
+                  type="tel"
+                  value={formData.phone.replace(/^\+964/, '')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d]/g, '');
+                    setFormData((prev: CreateUserRequest) => ({ ...prev, phone: '+964' + value }));
+                  }}
+                  className="w-full pl-16 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  placeholder="7XXXXXXXXX"
+                  required
+                />
+              </div>
             </div>
 
             <div>
@@ -383,9 +438,9 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
       case 'manager':
-        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+        return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
       case 'user':
         return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
       default:
@@ -493,22 +548,31 @@ export default function UsersPage() {
 
   useEffect(() => {
     console.log('🔄 UsersPage mounted, fetching users...')
-    fetchUsers()
+    loadUsers()
   }, [])
 
-  const fetchUsers = async () => {
+  const loadUsers = async () => {
     try {
-      console.log('📡 Starting fetchUsers...')
+      console.log('📡 Starting loadUsers...')
       setIsLoading(true)
       setError(null)
       
-      console.log('🌐 Making API call to listUsers...')
-      const usersList = await listUsers()
+      console.log('🌐 Making optimized direct Supabase call to fetchUsers...')
+      const usersList = await fetchUsers()
       
       console.log('✅ Users loaded successfully:', usersList)
       console.log('📊 Users count:', usersList?.length || 0)
-      setUsers(usersList)
-      setFilteredUsers(usersList)
+      
+      // Sort users immediately when loaded
+      const roleOrder = { 'admin': 1, 'manager': 2, 'user': 3 }
+      const sortedUsers = [...usersList].sort((a, b) => {
+        const roleComparison = (roleOrder[a.role as keyof typeof roleOrder] || 4) - (roleOrder[b.role as keyof typeof roleOrder] || 4)
+        if (roleComparison !== 0) return roleComparison
+        return a.full_name.localeCompare(b.full_name)
+      })
+      
+      setUsers(sortedUsers)
+      setFilteredUsers(sortedUsers)
     } catch (error: any) {
       console.error('❌ Failed to load users:', error)
       console.error('❌ Error details:', {
@@ -521,26 +585,35 @@ export default function UsersPage() {
     }
   }
 
-  // Filter users based on search term
+  // Filter and sort users based on search term
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredUsers(users)
-    } else {
-      const filtered = users.filter(user =>
+    let filtered = users
+    
+    if (searchTerm) {
+      filtered = users.filter(user =>
         user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      setFilteredUsers(filtered)
     }
+    
+    // Sort by role first (admin, manager, user), then by name
+    const roleOrder = { 'admin': 1, 'manager': 2, 'user': 3 }
+    const sorted = [...filtered].sort((a, b) => {
+      const roleComparison = (roleOrder[a.role as keyof typeof roleOrder] || 4) - (roleOrder[b.role as keyof typeof roleOrder] || 4)
+      if (roleComparison !== 0) return roleComparison
+      return a.full_name.localeCompare(b.full_name)
+    })
+    
+    setFilteredUsers(sorted)
   }, [searchTerm, users])
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      case 'manager':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'manager':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
       case 'user':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       default:
@@ -556,11 +629,6 @@ export default function UsersPage() {
     })
   }
 
-  const handleViewUser = (user: UserListItem) => {
-    console.log('View user clicked:', user)
-    setSelectedUser(user)
-    setIsDetailDrawerOpen(true)
-  }
 
   const handleEditUser = (user: UserListItem) => {
     console.log('Edit user clicked:', user)
@@ -621,10 +689,25 @@ export default function UsersPage() {
       alert('User deleted successfully')
       
       // Refresh users list
-      await fetchUsers()
+      await loadUsers()
     } catch (error: any) {
       console.error('Failed to delete user:', error)
       alert(`Failed to delete user: ${error.message}`)
+    }
+  }
+
+  const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    console.log('Toggling user status:', userId, 'Active:', isActive)
+    try {
+      await toggleUserStatus(userId, isActive)
+      console.log('User status updated successfully')
+      alert(`User ${isActive ? 'activated' : 'deactivated'} successfully`)
+      
+      // Refresh users list
+      await loadUsers()
+    } catch (error: any) {
+      console.error('Failed to toggle user status:', error)
+      alert(`Failed to ${isActive ? 'activate' : 'deactivate'} user: ${error.message}`)
     }
   }
 
@@ -654,24 +737,12 @@ export default function UsersPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 md:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <UserGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Users</p>
-                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.length}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 md:p-6">
-            <div className="flex items-center">
               <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                 <CheckCircleIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Active Users</p>
-                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.length}</p>
+                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.is_active).length}</p>
               </div>
             </div>
           </div>
@@ -679,7 +750,7 @@ export default function UsersPage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 md:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <UserIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
+                <ShieldCheckIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Admins</p>
@@ -691,11 +762,23 @@ export default function UsersPage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 md:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-                <BoltIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
+                <UserIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Managers</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.role === 'manager').length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 md:p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <UserGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="ml-3 md:ml-4">
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Users</p>
+                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.role === 'user').length}</p>
               </div>
             </div>
           </div>
@@ -795,19 +878,32 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <tr key={user.id} className={`hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${!user.is_active ? 'opacity-60' : ''}`}>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                              <span className="text-base font-bold text-white">
-                                {user.full_name.split(' ').map(n => n.charAt(0)).join('')}
-                              </span>
-                            </div>
+                          <div className="flex-shrink-0 relative">
+                            <UserAvatar 
+                              logoUrl={user.logo_url}
+                              fullName={user.full_name}
+                              size="lg"
+                              className="shadow-md"
+                            />
+                            {!user.is_active && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs font-bold">!</span>
+                              </div>
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
-                              {user.full_name}
+                            <div className="flex items-center gap-2">
+                              <div className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+                                {user.full_name}
+                              </div>
+                              {!user.is_active && (
+                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
+                                  Inactive
+                                </span>
+                              )}
                             </div>
                             <div className="text-sm text-slate-500 dark:text-slate-400 truncate">
                               {user.email}
@@ -832,13 +928,6 @@ export default function UsersPage() {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex justify-center items-center space-x-2">
-                          <button 
-                            onClick={() => handleViewUser(user)}
-                            className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group" 
-                            title="View User"
-                          >
-                            <EyeIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                          </button>
                           <RequireRole role="admin">
                             <button 
                               onClick={() => handleEditUser(user)}
@@ -919,20 +1008,32 @@ export default function UsersPage() {
             ) : (
               <div className="p-4 space-y-4">
                 {filteredUsers.map((user) => (
-                  <div key={user.id} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
+                  <div key={user.id} className={`bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600 ${!user.is_active ? 'opacity-60' : ''}`}>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center flex-1">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
-                              {user.full_name.split(' ').map(n => n.charAt(0)).join('')}
-                            </span>
-                          </div>
+                        <div className="flex-shrink-0 relative">
+                          <UserAvatar 
+                            logoUrl={user.logo_url}
+                            fullName={user.full_name}
+                            size="md"
+                          />
+                          {!user.is_active && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">!</span>
+                            </div>
+                          )}
                         </div>
                         <div className="ml-3 min-w-0 flex-1">
-                          <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
-                            {user.full_name}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
+                              {user.full_name}
+                            </h3>
+                            {!user.is_active && (
+                              <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
+                                Inactive
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-slate-500 dark:text-slate-400">
                             {user.email}
                           </p>
@@ -944,13 +1045,6 @@ export default function UsersPage() {
                     </div>
 
                     <div className="flex justify-end space-x-3">
-                      <button 
-                        onClick={() => handleViewUser(user)}
-                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" 
-                        title="View User"
-                      >
-                        <EyeIcon className="w-5 h-5" />
-                      </button>
                       <RequireRole role="admin">
                         <button 
                           onClick={() => handleEditUser(user)}
@@ -993,6 +1087,7 @@ export default function UsersPage() {
             setSelectedUser(null)
           }}
           onSave={handleUpdateUser}
+          onToggleStatus={handleToggleUserStatus}
         />
         
         <CreateUserModal

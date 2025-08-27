@@ -23,6 +23,8 @@ export type UserListItem = {
   full_name: string;
   phone: string;
   role: 'admin' | 'manager' | 'user';
+  logo_url: string | null;
+  is_active: boolean;
   created_at: string;
 };
 

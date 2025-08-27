@@ -14,6 +14,7 @@ import ItemsPage from './components/ItemsPage'
 import LayoutsPage from './components/LayoutsPage'
 import LayoutDesignerPage from './components/LayoutDesignerPage'
 import AccountsPage from './components/AccountsPage'
+import CustomerHistoryPage from './components/CustomerHistoryPage'
 import UsersPage from './components/UsersPage'
 import SettingsPage from './components/SettingsPage'
 
@@ -88,6 +89,13 @@ function App() {
               <SessionProvider>
                 <ProtectedRoute>
                   <AppShell><AccountsPage /></AppShell>
+                </ProtectedRoute>
+              </SessionProvider>
+            } />
+            <Route path="/accounts/history/:customerId" element={
+              <SessionProvider>
+                <ProtectedRoute>
+                  <AppShell><CustomerHistoryPage /></AppShell>
                 </ProtectedRoute>
               </SessionProvider>
             } />

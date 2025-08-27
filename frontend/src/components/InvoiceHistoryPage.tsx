@@ -11,6 +11,8 @@ import {
   CalendarDaysIcon
 } from '@heroicons/react/24/solid'
 import { fetchInvoices, deleteInvoice, changeInvoiceStatus, type InvoiceWithRelations } from '../lib/api'
+import { getStatusMessageTemplates, composeStatusMessage, openWhatsApp } from '../lib/whatsapp'
+import WhatsAppMessagePopup from './WhatsAppMessagePopup'
 
 export default function InvoiceHistoryPage() {
   const [invoices, setInvoices] = useState<InvoiceWithRelations[]>([])
@@ -27,6 +29,20 @@ export default function InvoiceHistoryPage() {
   const [newStatus, setNewStatus] = useState<'pending' | 'working' | 'done' | 'refused'>('pending')
   const [extraNote, setExtraNote] = useState('')
   const [savingStatus, setSavingStatus] = useState(false)
+  const [sendWhatsAppMessage, setSendWhatsAppMessage] = useState(true)
+  // WhatsApp message templates
+  const [statusTemplates, setStatusTemplates] = useState<Record<string, { message: string; allowExtraNote: boolean; sendWhatsApp: boolean }>>({})
+  // WhatsApp popup state
+  const [showWhatsAppPopup, setShowWhatsAppPopup] = useState(false)
+  const [whatsAppPopupData, setWhatsAppPopupData] = useState<{
+    customerName: string
+    customerPhone: string
+    invoiceId: string
+    status: string
+    statusTemplate: string
+    allowExtraNote: boolean
+    initialExtraNote?: string
+  } | null>(null)
   // Delete confirmation modal state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] = useState<{ id: string; customerName: string; totalAmount: number; status: string; createdAt: string } | null>(null)
@@ -34,6 +50,7 @@ export default function InvoiceHistoryPage() {
   useEffect(() => {
     console.log('🔄 InvoiceHistoryPage mounted, fetching invoices...')
     loadInvoices()
+    loadStatusTemplates()
   }, [])
 
   // Close dropdowns when clicking outside
@@ -79,6 +96,16 @@ export default function InvoiceHistoryPage() {
       setError(err.message || 'Failed to fetch invoices')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadStatusTemplates = async () => {
+    try {
+      const templates = await getStatusMessageTemplates()
+      setStatusTemplates(templates)
+    } catch (err: any) {
+      console.error('❌ Error loading status templates:', err)
+      // Don't show error to user as this is not critical
     }
   }
 
@@ -200,16 +227,46 @@ export default function InvoiceHistoryPage() {
       setNewStatus('pending')
     }
     setExtraNote('')
+    setSendWhatsAppMessage(true) // Reset to enabled by default
   }
 
+  const handleStatusChange = (selectedStatus: string) => {
+    // Only update the local state, don't save automatically
+    setNewStatus(selectedStatus as 'pending' | 'working' | 'done' | 'refused')
+  }
+  
   const submitChangeStatus = async () => {
     if (!showChangeStatusForId) return
+    
+    const currentInvoice = invoices.find(inv => inv.id === showChangeStatusForId)
+    if (!currentInvoice) return
+    
     try {
       setSavingStatus(true)
+      
+      // Update the invoice status with extra note
       await changeInvoiceStatus(showChangeStatusForId, newStatus, extraNote || undefined)
+      
+      // Check if we should open WhatsApp directly
+      const statusTemplate = statusTemplates[newStatus]
+      if (sendWhatsAppMessage && statusTemplate && statusTemplate.sendWhatsApp && statusTemplate.message && currentInvoice.customers.phone) {
+        // Compose the message and open WhatsApp directly
+        const message = composeStatusMessage(
+          statusTemplate.message,
+          currentInvoice.customers.name,
+          currentInvoice.id,
+          newStatus,
+          extraNote || undefined
+        )
+        
+        // Open WhatsApp directly
+        openWhatsApp(currentInvoice.customers.phone, message)
+      }
+      
       // Refetch invoices from backend to get latest status
-      await fetchInvoices()
+      await loadInvoices()
       setShowChangeStatusForId(null)
+      setExtraNote('')
     } catch (err: any) {
       alert(err.response?.data?.error || err.message || 'Failed to change status')
     } finally {
@@ -246,7 +303,7 @@ export default function InvoiceHistoryPage() {
               </div>
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Invoices</p>
-                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{invoices.length}</p>
+                <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{filteredInvoices.length}</p>
               </div>
             </div>
           </div>
@@ -259,7 +316,7 @@ export default function InvoiceHistoryPage() {
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Revenue</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {formatCurrency(invoices.reduce((sum, invoice) => sum + invoice.total_amount, 0))}
+                  {formatCurrency(filteredInvoices.reduce((sum, invoice) => sum + invoice.total_amount, 0))}
                 </p>
               </div>
             </div>
@@ -275,7 +332,7 @@ export default function InvoiceHistoryPage() {
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Pending</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {invoices.filter(invoice => invoice.status === 'pending').length}
+                  {filteredInvoices.filter(invoice => invoice.status === 'pending').length}
                 </p>
               </div>
             </div>
@@ -291,7 +348,7 @@ export default function InvoiceHistoryPage() {
               <div className="ml-3 md:ml-4">
                 <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Working</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {invoices.filter(invoice => invoice.status === 'working').length}
+                  {filteredInvoices.filter(invoice => invoice.status === 'working').length}
                 </p>
               </div>
             </div>
@@ -639,7 +696,7 @@ export default function InvoiceHistoryPage() {
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {formatCurrency(invoice.total_amount)}
                       </div>
                       <div className="flex space-x-3">
@@ -766,7 +823,12 @@ export default function InvoiceHistoryPage() {
               </button>
             </div>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Select a new status and optionally include an extra note to send via WhatsApp if enabled.
+              Select a new status and optionally include an extra note.
+              {statusTemplates[newStatus]?.sendWhatsApp && statusTemplates[newStatus]?.message && (
+                <span className="text-green-600 dark:text-green-400 block mt-1">
+                  📱 WhatsApp message will be sent automatically
+                </span>
+              )}
             </p>
           </div>
           <div className="p-6 space-y-4">
@@ -774,30 +836,94 @@ export default function InvoiceHistoryPage() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Status</label>
               <select
                 value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as any)}
+                onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={savingStatus}
               >
                 <option value="pending">Pending</option>
                 <option value="working">Working</option>
                 <option value="done">Done</option>
                 <option value="refused">Refused</option>
               </select>
+              {savingStatus && (
+                <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                  <span>Saving status...</span>
+                </div>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Extra Note (optional)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Extra Note (optional)
+                {statusTemplates[newStatus]?.sendWhatsApp && (
+                  <span className="text-xs text-green-600 dark:text-green-400 ml-2">
+                    Will be added to WhatsApp message
+                  </span>
+                )}
+              </label>
               <textarea
                 value={extraNote}
                 onChange={(e) => setExtraNote(e.target.value)}
                 rows={3}
-                placeholder="Add an extra message to include in the WhatsApp notification..."
+                placeholder={statusTemplates[newStatus]?.sendWhatsApp ? 
+                  "Add an extra message to include in the WhatsApp notification..." : 
+                  "Add an extra note for internal tracking..."
+                }
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              {statusTemplates[newStatus]?.sendWhatsApp && statusTemplates[newStatus]?.message && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">WhatsApp Message Preview:</p>
+                  <p className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
+                    {(() => {
+                      const currentInvoice = invoices.find(inv => inv.id === showChangeStatusForId)
+                      if (!currentInvoice) return statusTemplates[newStatus]?.message
+                      return composeStatusMessage(
+                        statusTemplates[newStatus]?.message || '',
+                        currentInvoice.customers.name,
+                        currentInvoice.id,
+                        newStatus,
+                        extraNote || undefined
+                      )
+                    })()}
+                  </p>
+                </div>
+              )}
             </div>
+            
+            {/* WhatsApp Message Checkbox */}
+            {statusTemplates[newStatus]?.sendWhatsApp && statusTemplates[newStatus]?.message && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sendWhatsAppMessage}
+                    onChange={(e) => setSendWhatsAppMessage(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Send WhatsApp message to customer
+                    </span>
+                    <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                      📱 Recommended
+                    </span>
+                  </div>
+                </label>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-7">
+                  Automatically notify the customer about the status change via WhatsApp
+                </p>
+              </div>
+            )}
           </div>
           <div className="p-6 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3">
             <button
-              onClick={() => setShowChangeStatusForId(null)}
+              onClick={() => {
+                setShowChangeStatusForId(null)
+                setExtraNote('')
+              }}
               className="px-4 py-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              disabled={savingStatus}
             >
               Cancel
             </button>
@@ -811,6 +937,27 @@ export default function InvoiceHistoryPage() {
           </div>
         </div>
       </div>
+    )}
+    
+    {/* WhatsApp Message Popup */}
+    {showWhatsAppPopup && whatsAppPopupData && (
+      <WhatsAppMessagePopup
+        isOpen={showWhatsAppPopup}
+        onClose={() => {
+          setShowWhatsAppPopup(false)
+          setWhatsAppPopupData(null)
+        }}
+        customerName={whatsAppPopupData.customerName}
+        customerPhone={whatsAppPopupData.customerPhone}
+        invoiceId={whatsAppPopupData.invoiceId}
+        status={whatsAppPopupData.status}
+        statusTemplate={whatsAppPopupData.statusTemplate}
+        allowExtraNote={whatsAppPopupData.allowExtraNote}
+        initialExtraNote={whatsAppPopupData.initialExtraNote}
+        onSend={() => {
+          console.log('WhatsApp message sent for invoice:', whatsAppPopupData.invoiceId)
+        }}
+      />
     )}
     </>
   )

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ActionIf from './ActionIf'
 import {
   PlusIcon,
@@ -13,6 +14,7 @@ import {
 import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer, type CustomerRow } from '../lib/api'
 
 export default function AccountsPage() {
+  const navigate = useNavigate()
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,6 +28,8 @@ export default function AccountsPage() {
     address: ''
   })
   const [searchTerm, setSearchTerm] = useState('')
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [selectedPhone, setSelectedPhone] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [customerToDelete, setCustomerToDelete] = useState<CustomerRow | null>(null)
 
@@ -184,6 +188,30 @@ export default function AccountsPage() {
     setShowModal(false)
     setEditingCustomer(null)
     setFormData({ name: '', phone: '', address: '' })
+  }
+
+  const handlePhoneClick = (phone: string) => {
+    if (phone && phone !== '—') {
+      setSelectedPhone(phone)
+      setShowPhoneModal(true)
+    }
+  }
+
+  const handlePhoneAction = (action: 'call' | 'whatsapp') => {
+    if (selectedPhone) {
+      if (action === 'call') {
+        window.open(`tel:${selectedPhone}`, '_self')
+      } else {
+        window.open(`https://wa.me/${selectedPhone.replace(/[^\d]/g, '')}`, '_blank')
+      }
+    }
+    setShowPhoneModal(false)
+    setSelectedPhone('')
+  }
+
+  const handleViewCustomerHistory = (customer: CustomerRow) => {
+    console.log('📊 Navigating to customer history for:', customer.name)
+    navigate(`/accounts/history/${customer.id}`)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -402,9 +430,18 @@ export default function AccountsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
-                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          {customer.phone || '—'}
-                        </span>
+                        {customer.phone && customer.phone !== '—' ? (
+                          <button 
+                            onClick={() => handlePhoneClick(customer.phone!)}
+                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer"
+                          >
+                            {customer.phone}
+                          </button>
+                        ) : (
+                          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                            —
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
                         <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -419,7 +456,11 @@ export default function AccountsPage() {
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="flex justify-center items-center space-x-2">
                           <ActionIf ability="clients.view">
-                            <button className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group" title="View Customer">
+                            <button 
+                              onClick={() => handleViewCustomerHistory(customer)}
+                              className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group" 
+                              title="View Customer History"
+                            >
                               <EyeIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             </button>
                           </ActionIf>
@@ -504,7 +545,7 @@ export default function AccountsPage() {
               <div className="p-4 space-y-4">
                 {filteredCustomers.map((customer) => (
                   <div key={customer.id} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 border border-slate-200 dark:border-slate-600">
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center flex-1">
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
@@ -514,25 +555,38 @@ export default function AccountsPage() {
                           </div>
                         </div>
                         <div className="ml-3 min-w-0 flex-1">
-                          <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
-                            {customer.name}
-                          </h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {customer.phone || 'No phone number'}
-                          </p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-lg">
+                              {customer.name}
+                            </h3>
+                          </div>
+                          {customer.phone && customer.phone !== 'No phone number' ? (
+                            <button 
+                              onClick={() => handlePhoneClick(customer.phone!)}
+                              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer"
+                            >
+                              {customer.phone}
+                            </button>
+                          ) : (
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              No phone number
+                            </p>
+                          )}
+                          {customer.address && (
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {customer.address}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">Address:</span>
-                        <span className="text-sm text-slate-900 dark:text-slate-100 text-right">{customer.address || 'No address'}</span>
-                      </div>
-                    </div>
-                    
                     <div className="flex justify-end space-x-3">
-                      <button className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="View Customer">
+                      <button 
+                        onClick={() => handleViewCustomerHistory(customer)}
+                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" 
+                        title="View Customer History"
+                      >
                         <EyeIcon className="w-5 h-5" />
                       </button>
                       <button 
@@ -599,15 +653,25 @@ export default function AccountsPage() {
                     <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Phone Number
                     </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter phone number"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-slate-500 dark:text-slate-400">+964</span>
+                      </div>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone.replace(/^\+964/, '')}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+                          setFormData(prev => ({ ...prev, phone: '+964' + value }));
+                        }}
+                        className="w-full pl-16 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="7XXXXXXXXX"
+                        pattern="[0-9]{10}"
+                        title="Phone number must be exactly 10 digits"
+                      />
+                    </div>
                   </div>
                   
                   <div>
@@ -725,6 +789,41 @@ export default function AccountsPage() {
             </div>
           </div>
         )}
+
+        {/* Phone Action Modal */}
+        {showPhoneModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                Contact Customer
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                How would you like to contact <span className="font-medium">{selectedPhone}</span>?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handlePhoneAction('call')}
+                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
+                >
+                  📞 Phone Call
+                </button>
+                <button
+                  onClick={() => handlePhoneAction('whatsapp')}
+                  className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium flex items-center justify-center gap-2"
+                >
+                  💬 WhatsApp
+                </button>
+              </div>
+              <button
+                onClick={() => setShowPhoneModal(false)}
+                className="w-full mt-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
