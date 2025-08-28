@@ -1,8 +1,8 @@
 // Auto-generated version file - DO NOT EDIT MANUALLY
 export const VERSION_INFO = {
-  "version": "1.0.3",
-  "buildTime": "2025-08-27T23:07:29.061Z",
-  "gitHash": "58210a7"
+  "version": "1.0.15",
+  "buildTime": "2025-08-27T23:46:48.818Z",
+  "gitHash": "b38889e"
 };
 
 export const getVersion = () => VERSION_INFO.version;

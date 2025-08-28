@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { supabase } from '../supabaseClient'; // Create this file with your Supabase config
+import { supabase } from '../lib/supabase';
 import { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import {
@@ -93,7 +93,7 @@ const SettingsPage: React.FC = () => {
         });
         
         // Fill with database values
-        data.forEach(setting => {
+        data.forEach((setting: any) => {
           messages[setting.status] = setting.default_message || '';
         });
         

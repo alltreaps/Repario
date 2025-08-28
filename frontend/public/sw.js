@@ -23,8 +23,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // If network request succeeds, update cache and return response
-        if (response.status === 200) {
+        // Only cache GET requests with successful responses
+        if (response.status === 200 && event.request.method === 'GET') {
           const responseClone = response.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
@@ -34,8 +34,12 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails, try cache
-        return caches.match(event.request);
+        // If network fails, try cache (only for GET requests)
+        if (event.request.method === 'GET') {
+          return caches.match(event.request);
+        }
+        // For non-GET requests, return a network error
+        return new Response('Network error', { status: 408 });
       })
   );
 });
