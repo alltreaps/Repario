@@ -15,11 +15,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { fetchLayouts, fetchItems, fetchCustomers, fetchLayoutDeep, api } from '../lib/api'
 import { getStatusMessageTemplates } from '../lib/whatsapp'
 import WhatsAppMessagePopup from './WhatsAppMessagePopup'
+import { useLanguage } from '../contexts/LanguageContext'
 import type { Layout, Field, FieldType, Item, InvoiceItem } from '../types'
 
 export default function NewInvoicePage() {
   const { invoiceId } = useParams<{ invoiceId: string }>()
   const navigate = useNavigate()
+  const { t, isRTL } = useLanguage()
   const isEditMode = Boolean(invoiceId)
   
   // Debug logging for edit mode detection
@@ -264,7 +266,7 @@ export default function NewInvoicePage() {
       console.log('✅ Invoice data loaded for editing:', invoice)
     } catch (err: any) {
       console.error('❌ Error fetching invoice for editing:', err)
-      alert('Failed to load invoice data. Please try again.')
+      alert(t('invoices.failedToLoadInvoice'))
       // Navigate back to history if invoice not found
       if (err.response?.status === 404) {
         navigate('/invoices/history')
@@ -546,7 +548,7 @@ export default function NewInvoicePage() {
       )
       
       if (exactMatch && !isCustomerFromSuggestion) {
-        alert(`Customer "${customerInfo.name}" already exists. Please select from the dropdown suggestions.`)
+        alert(t('invoices.customerAlreadyExists').replace('{{name}}', customerInfo.name))
         return
       }
       
@@ -573,12 +575,12 @@ export default function NewInvoicePage() {
       // Validate required fields before sending
       // Layout is now optional
       if (!customerInfo.name?.trim()) {
-        alert('Please enter customer name before saving the invoice.')
+        alert(t('invoices.enterCustomerName'))
         return
       }
 
       if (items.length === 0) {
-        alert('Please add at least one item before saving the invoice.')
+        alert(t('invoices.addAtLeastOneItem'))
         return
       }
 
@@ -591,7 +593,7 @@ export default function NewInvoicePage() {
       )
 
       if (invalidItems.length > 0) {
-        alert('Please ensure all items have valid name, quantity, price, and total values.')
+        alert(t('invoices.ensureValidItems'))
         return
       }
 
@@ -643,7 +645,7 @@ export default function NewInvoicePage() {
           setShowWhatsAppPopup(true)
         } else {
           // Show success message if no WhatsApp popup
-          alert(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully! Invoice ID: ${savedInvoice.id}`)
+          alert(`${isEditMode ? t('invoices.invoiceUpdated') : t('invoices.invoiceSaved')} ${savedInvoice.id}`)
         }
         
         if (isEditMode) {
@@ -794,10 +796,10 @@ export default function NewInvoicePage() {
         {/* Header - Hidden on mobile, shown on desktop */}
         <div className="hidden md:block mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-            {isEditMode ? 'Edit Invoice' : 'Create New Invoice'}
+            {isEditMode ? t('invoices.editInvoiceTitle') : t('invoices.createInvoiceTitle')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-            {isEditMode ? 'Update the customer details and invoice information' : 'Fill in the customer details and invoice information'}
+            {isEditMode ? t('invoices.editInvoiceSubtitle') : t('invoices.createInvoiceSubtitle')}
           </p>
         </div>
 
@@ -805,18 +807,18 @@ export default function NewInvoicePage() {
         <div className="flex justify-center mb-8">
           <div className="flex gap-3 sm:gap-6 flex-wrap">
             {[
-              { key: 'pending', label: 'Pending', icon: (
+              { key: 'pending', label: t('invoices.pending'), icon: (
                 <svg className="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) },
-              { key: 'working', label: 'Working', icon: (
+              { key: 'working', label: t('invoices.working'), icon: (
                 <ArrowPathIcon className="w-6 h-6 mr-2 text-blue-500" />
               ) },
-              { key: 'done', label: 'Done', icon: (
+              { key: 'done', label: t('invoices.done'), icon: (
                 <CheckCircleIcon className="w-6 h-6 mr-2 text-green-600" />
               ) },
-              { key: 'refused', label: 'Refused', icon: (
+              { key: 'refused', label: t('invoices.refused'), icon: (
                 <XCircleIcon className="w-6 h-6 mr-2 text-red-600" />
               ) },
             ].map(({ key, label }) => (
@@ -883,16 +885,16 @@ export default function NewInvoicePage() {
             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-xl">
               <UsersIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Customer Information</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('invoices.customerInformation')}</h2>
             <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-medium rounded-full">
-              Required
+              {t('invoices.required')}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Customer Name <span className="text-red-500">*</span>
+                {t('invoices.customerName')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
@@ -909,7 +911,7 @@ export default function NewInvoicePage() {
                     setTimeout(() => setShowCustomerSuggestions(false), 150)
                   }}
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter customer name (start typing to search existing customers)"
+                  placeholder={t('invoices.customerNamePlaceholder')}
                   required
                 />
                 
@@ -919,7 +921,7 @@ export default function NewInvoicePage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
                     </svg>
-                    <span>Selected from existing customers</span>
+                    <span>{t('invoices.selectedFromExisting')}</span>
                   </div>
                 )}
                 
@@ -930,8 +932,8 @@ export default function NewInvoicePage() {
                     </svg>
                     <span>
                       {forceCreateCustomer 
-                        ? "Will create new customer (confirmed)" 
-                        : "Will create new customer (check for similar names)"
+                        ? t('invoices.willCreateNewConfirmed') 
+                        : t('invoices.willCreateNew')
                       }
                     </span>
                   </div>
@@ -956,7 +958,7 @@ export default function NewInvoicePage() {
                             )}
                           </div>
                           <div className="text-xs text-blue-600 dark:text-blue-400 ml-2">
-                            Click to select
+                            {t('invoices.clickToSelect')}
                           </div>
                         </div>
                       </div>
@@ -968,7 +970,7 @@ export default function NewInvoicePage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Phone Number <span className="text-red-500">*</span>
+                {t('invoices.phoneNumber')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -981,10 +983,11 @@ export default function NewInvoicePage() {
                     const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
                     handleCustomerInfoChange('phone', '+964' + value);
                   }}
-                  className="w-full pl-16 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="7XXXXXXXXX"
+                  className="w-full pl-16 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  style={{ paddingInlineEnd: isRTL ? '24px' : '16px' }}
+                  placeholder={t('invoices.phonePlaceholder')}
                   pattern="[0-9]{10}"
-                  title="Phone number must be exactly 10 digits"
+                  title={t('invoices.phoneValidation')}
                   required
                 />
               </div>
@@ -992,14 +995,14 @@ export default function NewInvoicePage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Address <span className="text-red-500">*</span>
+                {t('invoices.address')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={customerInfo.address}
                 onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter customer address"
+                placeholder={t('invoices.addressPlaceholder')}
                 required
               />
             </div>
@@ -1012,9 +1015,9 @@ export default function NewInvoicePage() {
             <div className="p-2 bg-green-100 dark:bg-green-900 rounded-xl">
               <CubeIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Invoice Items</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('invoices.invoiceItems')}</h2>
             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
-              {items.length} {items.length === 1 ? 'item' : 'items'}
+              {items.length} {items.length === 1 ? t('invoices.item') : t('invoices.items')}
             </span>
           </div>
 
@@ -1022,11 +1025,11 @@ export default function NewInvoicePage() {
             <div className="bg-slate-50 dark:bg-slate-600 px-4 py-3 border-b border-slate-300 dark:border-slate-500">
               {/* Custom grid layout for desktop: larger item column, smaller qty/price columns */}
               <div className="grid grid-cols-8 md:grid-cols-12 gap-2 md:gap-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                <div className="col-span-4 md:col-span-5 text-left">Item</div>
-                <div className="col-span-1 md:col-span-2 text-center">Qty</div>
-                <div className="col-span-2 md:col-span-2 text-center">Price</div>
-                <div className="hidden md:block md:col-span-2 text-center">Total</div>
-                <div className="col-span-1 md:col-span-1 text-center">Action</div>
+                <div className="col-span-4 md:col-span-5 text-left">{t('invoices.itemColumn')}</div>
+                <div className="col-span-1 md:col-span-2 text-center">{t('invoices.quantityColumn')}</div>
+                <div className="col-span-2 md:col-span-2 text-center">{t('invoices.priceColumn')}</div>
+                <div className="hidden md:block md:col-span-2 text-center">{t('invoices.totalColumn')}</div>
+                <div className="col-span-1 md:col-span-1 text-center">{t('invoices.actionColumn')}</div>
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -1035,9 +1038,9 @@ export default function NewInvoicePage() {
                   <div className="text-slate-500 dark:text-slate-400 mb-4">
                     <CubeIcon className="w-12 h-12 mx-auto mb-3 text-slate-300 dark:text-slate-600" />
                   </div>
-                  <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">No items added yet</h4>
+                  <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">{t('invoices.noItemsAdded')}</h4>
                   <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
-                    Add items to your invoice using the buttons below
+                    {t('invoices.noItemsDescription')}
                   </p>
                 </div>
               ) : (
@@ -1067,7 +1070,7 @@ export default function NewInvoicePage() {
                           // Hide suggestions when clicking outside (with small delay to allow clicks)
                           setTimeout(() => setShowSuggestionsForItem(null), 150)
                         }}
-                        placeholder="Item name (start typing to search)"
+                        placeholder={t('invoices.itemNamePlaceholder')}
                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm"
                       />
                       {/* Search Suggestions */}
@@ -1149,7 +1152,7 @@ export default function NewInvoicePage() {
                       <button
                         onClick={() => removeItem(item.id)}
                         className="p-1 md:p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center w-full md:w-auto"
-                        title="Remove Item"
+                        title={t('invoices.removeItem')}
                       >
                         <TrashIcon className="w-4 h-4" />
                       </button>
@@ -1163,26 +1166,26 @@ export default function NewInvoicePage() {
                   <button
                     onClick={addItem}
                     className="py-2 px-2 md:px-4 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                    title="Add Item"
+                    title={t('invoices.addItem')}
                   >
                     <PlusIcon className="w-5 h-5 md:w-4 md:h-4" />
-                    <span className="hidden md:inline">Add Item</span>
+                    <span className="hidden md:inline">{t('invoices.addItem')}</span>
                   </button>
                   {catalogItems.length > 0 && (
                     <button
                       onClick={() => setShowItemSelector(true)}
                       className="py-2 px-2 md:px-4 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                      title="Choose from Catalog"
+                      title={t('invoices.chooseFromCatalog')}
                     >
                       <CubeIcon className="w-5 h-5 md:w-4 md:h-4 text-green-600 dark:text-green-400" />
-                      <span className="hidden md:inline">Choose from Catalog</span>
+                      <span className="hidden md:inline">{t('invoices.chooseFromCatalog')}</span>
                     </button>
                   )}
                 </div>
                 
                 <div className="text-right space-y-2">
                   <div className="flex justify-between items-center gap-8 text-lg font-bold">
-                    <span>Subtotal:</span>
+                    <span>{t('invoices.subtotal')}:</span>
                     <span className="text-green-600 dark:text-green-400">${subtotal.toFixed(2)}</span>
                   </div>
                 </div>
@@ -1198,31 +1201,31 @@ export default function NewInvoicePage() {
               <div className="mb-4">
                 <RectangleGroupIcon className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
               </div>
-              <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">No Invoice Layouts</h4>
+              <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">{t('invoices.noInvoiceLayouts')}</h4>
               <p className="text-slate-600 dark:text-slate-400 mb-4 max-w-md mx-auto">
-                You can create invoices without layouts, or create a layout template for consistent formatting across all your invoices.
+                {t('invoices.noLayoutsDescription')}
               </p>
               <button
                 onClick={() => window.location.href = '/layouts'}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-400 hover:from-purple-700 hover:to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
-                Create Your First Layout
+                {t('invoices.createFirstLayout')}
               </button>
             </div>
           ) : (
             <div className="flex gap-3 items-center">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Choose Layout (Optional):
+                {t('invoices.chooseLayout')}:
               </label>
               <select
                 value={selectedLayout?.id || ''}
                 onChange={(e) => handleLayoutChange(e.target.value)}
                 className="flex-1 px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">No Layout (Basic Invoice)</option>
+                <option value="">{t('invoices.noLayout')}</option>
                 {layouts.map((layout) => (
                   <option key={layout.id} value={layout.id}>
-                    {layout.name} {layout.isDefault ? '(Default)' : ''}
+                    {layout.name} {layout.isDefault ? `(${t('invoices.default')})` : ''}
                   </option>
                 ))}
               </select>
@@ -1257,7 +1260,7 @@ export default function NewInvoicePage() {
             onClick={handleSaveInvoice}
             className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
-            {isEditMode ? 'Update Invoice' : 'Save Invoice'}
+            {isEditMode ? t('invoices.updateInvoice') : t('invoices.saveInvoice')}
           </button>
         </div>
       </div>
@@ -1268,7 +1271,7 @@ export default function NewInvoicePage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-4xl max-h-[80vh] overflow-hidden">
             <div className="p-6 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Choose from Catalog</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('invoices.chooseFromCatalogTitle')}</h3>
                 <button
                   onClick={() => setShowItemSelector(false)}
                   className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg transition-colors"
@@ -1279,7 +1282,7 @@ export default function NewInvoicePage() {
                 </button>
               </div>
               <p className="text-slate-600 dark:text-slate-400 mt-2">
-                Select items from your catalog to add to the invoice
+                {t('invoices.chooseFromCatalogDescription')}
               </p>
             </div>
             
@@ -1297,7 +1300,7 @@ export default function NewInvoicePage() {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search items..."
+                    placeholder={t('invoices.searchItems')}
                     className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -1309,7 +1312,7 @@ export default function NewInvoicePage() {
                     onChange={(e) => setSelectedCategoryFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="all">All Categories</option>
+                    <option value="all">{t('invoices.allCategories')}</option>
                     {availableCategories.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -1328,8 +1331,8 @@ export default function NewInvoicePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                       </div>
-                      <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">No items in catalog</h4>
-                      <p className="text-slate-600 dark:text-slate-400">Create some items in your catalog first to select from here.</p>
+                      <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">{t('invoices.noItemsInCatalog')}</h4>
+                      <p className="text-slate-600 dark:text-slate-400">{t('invoices.noItemsInCatalogDescription')}</p>
                     </div>
                 ) : filteredCatalogItems.length === 0 ? (
                     <div className="text-center py-12">
@@ -1338,9 +1341,9 @@ export default function NewInvoicePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                       </div>
-                      <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">No items found</h4>
+                      <h4 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">{t('invoices.noItemsFound')}</h4>
                       <p className="text-slate-600 dark:text-slate-400">
-                        Try adjusting your search terms or category filter.
+                        {t('invoices.noItemsFoundDescription')}
                       </p>
                     </div>
                 ) : (
@@ -1377,7 +1380,7 @@ export default function NewInvoicePage() {
                         
                         <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
                           <button className="w-full px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors">
-                            Add to Invoice
+                            {t('invoices.addToInvoice')}
                           </button>
                         </div>
                       </div>
@@ -1406,14 +1409,14 @@ export default function NewInvoicePage() {
                 </button>
               </div>
               <p className="text-slate-600 dark:text-slate-400 mt-2">
-                We found customers with similar names. Please choose an existing customer or confirm you want to create a new one.
+                {t('invoices.similarCustomersDescription')}
               </p>
             </div>
             
             <div className="p-6">
               <div className="mb-6">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                  You are trying to create:
+                  {t('invoices.youAreTryingToCreate')}
                 </h4>
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                   <div className="font-medium text-slate-900 dark:text-slate-100">{pendingCustomerInfo?.name}</div>
@@ -1428,7 +1431,7 @@ export default function NewInvoicePage() {
 
               <div className="mb-6">
                 <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                  Similar existing customers:
+                  {t('invoices.similarCustomersTitle')}
                 </h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {similarCustomers.map((customer) => (
@@ -1461,13 +1464,13 @@ export default function NewInvoicePage() {
                   onClick={() => setShowCustomerConfirmDialog(false)}
                   className="flex-1 px-4 py-3 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium"
                 >
-                  Cancel
+                  {t('invoices.cancel')}
                 </button>
                 <button
                   onClick={proceedWithNewCustomer}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-colors"
                 >
-                  Create New Customer Anyway
+                  {t('invoices.createNewCustomerAnyway')}
                 </button>
               </div>
             </div>
@@ -1484,7 +1487,7 @@ export default function NewInvoicePage() {
             setWhatsAppPopupData(null)
             
             // Show success message after popup closes
-            alert(`Invoice ${isEditMode ? 'updated' : 'saved'} successfully! Invoice ID: ${whatsAppPopupData.invoiceId}`)
+            alert(`${isEditMode ? t('invoices.invoiceUpdated') : t('invoices.invoiceSaved')} ${whatsAppPopupData.invoiceId}`)
             
             if (isEditMode) {
               navigate('/invoices/history')

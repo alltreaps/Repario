@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 import type { InvoiceWithRelations, CustomerRow } from '../lib/api';
 
 // Direct Supabase interfaces for instant loading
@@ -93,6 +94,7 @@ const fetchItemsInstant = async (): Promise<ItemRow[]> => {
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, isRTL } = useLanguage();
   const [invoices, setInvoices] = useState<InvoiceWithRelations[]>([]);
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [recentLayouts, setRecentLayouts] = useState<LayoutRow[]>([]);
@@ -112,9 +114,9 @@ export default function HomePage() {
   // Get greeting and tips based on time
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t('dashboard.goodMorning');
+    if (hour < 17) return t('dashboard.goodAfternoon');
+    return t('dashboard.goodEvening');
   };
 
   useEffect(() => {
@@ -146,38 +148,39 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto">
         <div className="hidden lg:block mb-6 lg:mb-8">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-            Dashboard
+            {t('dashboard.title')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2 text-base lg:text-lg">
-            Overview of your business performance and recent activity
+            {t('dashboard.subtitle')}
           </p>
         </div>
 
         {/* Welcome Message with Date & Time */}
         <div className="mb-8">
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 p-4 md:p-6 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <div className="text-center md:text-left">
+            <div className={`text-center md:text-left ${isRTL ? 'md:text-right' : ''}`}>
               <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 {getGreeting()}{user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}! 👋
               </h2>
               <p className="text-sm md:text-base text-slate-600 dark:text-slate-400">
-                Welcome back to your business dashboard
+                {t('dashboard.welcomeBack')}
               </p>
             </div>
-            <div className="text-center md:text-right bg-slate-50 dark:bg-slate-700 p-3 rounded-lg md:bg-transparent md:dark:bg-transparent md:p-0">
+            <div className={`text-center md:text-right bg-slate-50 dark:bg-slate-700 p-3 rounded-lg md:bg-transparent md:dark:bg-transparent md:p-0 ${isRTL ? 'md:text-left' : ''}`}>
               <div className="text-lg md:text-xl font-medium text-slate-900 dark:text-slate-100">
-                {currentTime.toLocaleTimeString('en-US', { 
-                  hour: 'numeric', 
+                {currentTime.toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', {
+                  hour: 'numeric',
                   minute: '2-digit',
-                  hour12: true 
+                  hour12: true
                 })}
               </div>
               <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
-                {currentTime.toLocaleDateString('en-US', { 
+                {currentTime.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
                   weekday: 'long',
-                  month: 'long', 
+                  month: 'long',
                   day: 'numeric',
-                  year: 'numeric'
+                  year: 'numeric',
+                  calendar: 'gregory'
                 })}
               </div>
             </div>
@@ -192,7 +195,7 @@ export default function HomePage() {
                 <DocumentTextIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Invoices</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('dashboard.totalInvoices')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : invoices.length}</p>
               </div>
             </div>
@@ -203,7 +206,7 @@ export default function HomePage() {
                 <BanknotesIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Revenue</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('dashboard.revenue')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {loading ? '...' : invoices.reduce((sum: number, inv) => sum + (inv.total_amount || 0), 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </p>
@@ -216,7 +219,7 @@ export default function HomePage() {
                 <UsersIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Clients</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('dashboard.clients')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : customers.length}</p>
               </div>
             </div>
@@ -227,7 +230,7 @@ export default function HomePage() {
                 <RectangleGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Layouts</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('dashboard.layouts')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : recentLayouts.length}</p>
               </div>
             </div>
@@ -235,10 +238,10 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Recent Activity</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('dashboard.recentActivity')}</h2>
             <div className="space-y-3">
               {loading ? (
-                <div className="text-slate-500">Loading...</div>
+                <div className="text-slate-500">{t('dashboard.loading')}</div>
               ) : (
                 <>
                   {([
@@ -304,10 +307,10 @@ export default function HomePage() {
                         'bg-green-500'
                       }`}></div>
                       <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {activity.type === 'layout' && `Layout "${activity.name}" ${activity.action}`}
-                        {activity.type === 'item' && `Item "${activity.name}" ${activity.action}`}
-                        {activity.type === 'invoice' && `Invoice for ${activity.name} ${activity.action}`}
-                        {activity.type === 'customer' && `Client "${activity.name}" ${activity.action}`}
+                        {activity.type === 'layout' && t('dashboard.layoutCreated', { name: activity.name, action: t(`dashboard.${activity.action}`) })}
+                        {activity.type === 'item' && t('dashboard.itemCreated', { name: activity.name, action: t(`dashboard.${activity.action}`) })}
+                        {activity.type === 'invoice' && t('dashboard.invoiceCreated', { name: activity.name, action: t(`dashboard.${activity.action}`) })}
+                        {activity.type === 'customer' && t('dashboard.customerCreated', { name: activity.name, action: t(`dashboard.${activity.action}`) })}
                         {/* Removed activity.fields display as requested */}
                       </span>
                     </div>
@@ -317,7 +320,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Quick Actions</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('dashboard.quickActions')}</h2>
             <div className="space-y-3">
               <button
                 className="w-full text-left px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-blue-500/25 relative overflow-hidden group"
@@ -325,7 +328,7 @@ export default function HomePage() {
               >
                 <div className="relative z-10 flex items-center">
                   <DocumentTextIcon className="w-5 h-5 mr-2 text-white transition-colors" />
-                  Create New Invoice
+                  {t('dashboard.createNewInvoice')}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
@@ -335,7 +338,7 @@ export default function HomePage() {
               >
                 <div className="relative z-10 flex items-center">
                   <RectangleGroupIcon className="w-5 h-5 mr-2 text-white transition-colors" />
-                  Design New Layout
+                  {t('dashboard.designNewLayout')}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>
@@ -345,7 +348,7 @@ export default function HomePage() {
               >
                 <div className="relative z-10 flex items-center">
                   <UsersIcon className="w-5 h-5 mr-2 text-white transition-colors" />
-                  Add New Client
+                  {t('dashboard.addNewClient')}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </button>

@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { fetchLayoutDeep, fetchLayouts, api } from '../lib/api'
 import { useLayoutContext } from '../contexts/LayoutContext'
+import { useTranslation } from '../contexts/LanguageContext'
 import type { FieldType, Section, Field, CreateField, Layout } from '../types/layout'
 
 export default function LayoutDesignerPage() {
@@ -22,6 +23,7 @@ export default function LayoutDesignerPage() {
   const paramLayoutId = searchParams.get('layoutId')
   const actualLayoutId = layoutId || paramLayoutId || ''
   const { setCurrentLayoutName } = useLayoutContext()
+  const { t } = useTranslation()
   
   const [layout, setLayout] = useState<Layout | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -41,11 +43,26 @@ export default function LayoutDesignerPage() {
   const [showDeleteFieldConfirm, setShowDeleteFieldConfirm] = useState(false)
   const [fieldToDelete, setFieldToDelete] = useState<{ field: Field; sectionId: string } | null>(null)
 
+  // Helper function to translate field types
+  const getFieldTypeLabel = (type: string) => {
+    switch (type) {
+      case 'input': return t('layouts.fieldTypeInput')
+      case 'description': return t('layouts.fieldTypeDescription')
+      case 'dropdown': return t('layouts.fieldTypeDropdown')
+      case 'checkboxes': return t('layouts.fieldTypeCheckboxes')
+      case 'number': return t('layouts.number')
+      case 'email': return t('layouts.email')
+      case 'phone': return t('layouts.phone')
+      case 'date': return t('layouts.date')
+      default: return type
+    }
+  }
+
   // Fetch layout from API
   useEffect(() => {
     const fetchLayout = async () => {
       if (!actualLayoutId) {
-        setError('No layout ID provided')
+        setError(t('layouts.noLayoutId'))
         setIsLoading(false)
         return
       }
@@ -90,7 +107,7 @@ export default function LayoutDesignerPage() {
         setCurrentLayoutName(transformedLayout.name)
       } catch (err) {
         console.error('❌ LayoutDesignerPage: Error fetching layout:', err)
-        setError('Failed to fetch layout')
+        setError(t('layouts.failedToFetchLayout'))
       } finally {
         setIsLoading(false)
       }
@@ -122,23 +139,23 @@ export default function LayoutDesignerPage() {
             <ExclamationTriangleIcon className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            {error || 'Layout Not Found'}
+            {error || t('layouts.layoutNotFound')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            {error || 'The requested layout could not be found or doesn\'t exist.'}
+            {error || t('layouts.layoutNotFoundDescription')}
           </p>
           <div className="flex gap-3 mt-6">
             <button 
               onClick={() => navigate('/layouts')} 
               className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
             >
-              Back to Layouts
+              {t('layouts.backToLayouts')}
             </button>
             <button 
               onClick={() => window.location.href = window.location.href} 
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Retry
+              {t('layouts.retry')}
             </button>
           </div>
         </div>
@@ -149,7 +166,7 @@ export default function LayoutDesignerPage() {
   const handleAddSection = async () => {
     try {
       const newSection = {
-        title: 'New Section',
+        title: t('layouts.newSection'),
         fields: []
       }
       
@@ -159,7 +176,7 @@ export default function LayoutDesignerPage() {
         sections: [...layout.sections, response.data]
       })
     } catch (err) {
-      setError('Failed to add section')
+      setError(t('layouts.failedToAddSection'))
       console.error('Error adding section:', err)
     }
   }
@@ -216,10 +233,10 @@ export default function LayoutDesignerPage() {
     }
     
     const fieldDefaults: Record<FieldType, FieldDefaults> = {
-      input: { label: 'Text Input', placeholder: 'Enter text...' },
-      description: { label: 'Description', placeholder: 'Enter description...' },
-      dropdown: { label: 'Dropdown', placeholder: 'Select option...', options: [{ label: 'Option 1', value: 'option1' }] },
-      checkboxes: { label: 'Checkboxes', options: [{ label: 'Option 1', value: 'option1' }] }
+      input: { label: t('layouts.textInput'), placeholder: t('layouts.enterText') },
+      description: { label: t('layouts.description'), placeholder: t('layouts.enterDescription') },
+      dropdown: { label: t('layouts.dropdown'), placeholder: t('layouts.selectOption'), options: [{ label: t('layouts.option1'), value: t('layouts.option1Value') }] },
+      checkboxes: { label: t('layouts.checkboxes'), options: [{ label: t('layouts.option1'), value: t('layouts.option1Value') }] }
     }
 
     const defaults = fieldDefaults[fieldType]
@@ -546,7 +563,7 @@ export default function LayoutDesignerPage() {
                 {layout.name}
               </h1>
               <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-                {layout.sections.length} sections • {layout.sections.reduce((acc, section) => acc + section.fields.length, 0)} fields
+                {layout.sections.length} {t('layouts.sections')} • {layout.sections.reduce((acc, section) => acc + section.fields.length, 0)} {t('layouts.fields')}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -555,13 +572,13 @@ export default function LayoutDesignerPage() {
                 className="px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
               >
                 <PlusIcon className="w-5 h-5" />
-                Add Section
+                {t('layouts.addSection')}
               </button>
               <button 
                 onClick={handleSaveLayout}
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
               >
-                Save Layout
+                {t('layouts.saveLayout')}
               </button>
             </div>
           </div>
@@ -576,13 +593,13 @@ export default function LayoutDesignerPage() {
             className="w-full sm:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
           >
             <PlusIcon className="w-5 h-5" />
-            Add Section
+            {t('layouts.addSection')}
           </button>
           <button 
             onClick={handleSaveLayout}
             className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
           >
-            Save Layout
+            {t('layouts.saveLayout')}
           </button>
         </div>
       </div>
@@ -593,9 +610,9 @@ export default function LayoutDesignerPage() {
             <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-6 shadow-lg">
               <DocumentTextIcon className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Start Building Your Layout</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">{t('layouts.startBuilding')}</h3>
             <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto leading-relaxed">
-              Design your invoice template by creating sections and adding custom fields. 
+              {t('layouts.startBuildingDescription')} 
               Organize your content with logical groupings to create professional, structured invoices.
             </p>
             <button 
@@ -614,15 +631,15 @@ export default function LayoutDesignerPage() {
               <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <RectangleGroupIcon className="w-4 h-4 text-blue-500" />
-                  <span>Client Information</span>
+                  <span>{t('layouts.clientInformation')}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <DocumentTextIcon className="w-4 h-4 text-blue-500" />
-                  <span>Project Details</span>
+                  <span>{t('layouts.projectDetails')}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <CheckCircleIcon className="w-4 h-4 text-blue-500" />
-                  <span>Payment Terms</span>
+                  <span>{t('layouts.paymentTerms')}</span>
                 </div>
               </div>
             </div>
@@ -644,7 +661,7 @@ export default function LayoutDesignerPage() {
                         <PencilSquareIcon className="w-4 h-4" />
                       </button>
                       <span className="text-sm text-slate-500 dark:text-slate-400">
-                        {section.fields.length} field{section.fields.length !== 1 ? 's' : ''}
+                        {t('layouts.fieldCount', { count: section.fields.length, plural: section.fields.length !== 1 ? 's' : '' })}
                       </span>
                     </div>
                     
@@ -658,25 +675,25 @@ export default function LayoutDesignerPage() {
                               onClick={() => handleAddField(section.id, 'input')}
                               className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                             >
-                              Text Input
+                              {t('layouts.textInput')}
                             </button>
                             <button
                               onClick={() => handleAddField(section.id, 'description')}
                               className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                             >
-                              Text Area
+                              {t('layouts.textarea')}
                             </button>
                             <button
                               onClick={() => handleAddField(section.id, 'dropdown')}
                               className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                             >
-                              Dropdown
+                              {t('layouts.dropdown')}
                             </button>
                             <button
                               onClick={() => handleAddField(section.id, 'checkboxes')}
                               className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                             >
-                              Checkboxes
+                              {t('layouts.checkboxes')}
                             </button>
                           </div>
                         </div>
@@ -702,7 +719,7 @@ export default function LayoutDesignerPage() {
                   {section.fields.length === 0 ? (
                     <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-600 rounded-xl">
                       <RectangleGroupIcon className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-                      <p className="text-slate-500 dark:text-slate-400 mb-4">No fields in this section yet</p>
+                      <p className="text-slate-500 dark:text-slate-400 mb-4">{t('layouts.noFieldsInSection')}</p>
                       <button
                         onClick={() => handleAddField(section.id, 'input')}
                         className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
@@ -721,7 +738,7 @@ export default function LayoutDesignerPage() {
                               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                                 <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                                   <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Edit Field</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('layouts.editField')}</h3>
                                     <button
                                       onClick={() => {
                                         setEditingField(null)
@@ -736,36 +753,38 @@ export default function LayoutDesignerPage() {
                                 
                                 <div className="p-6 space-y-6">
                                   <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Label</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('layouts.fieldLabel')}</label>
                                     <input
                                       type="text"
                                       value={fieldData.label || ''}
                                       onChange={(e) => setFieldData({ ...fieldData, label: e.target.value })}
+                                      placeholder={t('layouts.fieldLabelHint')}
                                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     />
                                   </div>
                                   
                                   <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Field Type</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('layouts.fieldType')}</label>
                                     <select
                                       value={fieldData.type || ''}
                                       onChange={(e) => setFieldData({ ...fieldData, type: e.target.value as FieldType })}
                                       className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                     >
-                                      <option value="input">Text Input</option>
-                                      <option value="description">Text Area</option>
-                                      <option value="dropdown">Dropdown</option>
-                                      <option value="checkboxes">Checkboxes</option>
+                                      <option value="input">{t('layouts.text')}</option>
+                                      <option value="description">{t('layouts.textarea')}</option>
+                                      <option value="dropdown">{t('layouts.dropdown')}</option>
+                                      <option value="checkboxes">{t('layouts.checkboxes')}</option>
                                     </select>
                                   </div>
                                   
                                   {(fieldData.type === 'input' || fieldData.type === 'description') && (
                                     <div>
-                                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Placeholder</label>
+                                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('layouts.fieldPlaceholder')}</label>
                                       <input
                                         type="text"
                                         value={fieldData.placeholder || ''}
                                         onChange={(e) => setFieldData({ ...fieldData, placeholder: e.target.value })}
+                                        placeholder={t('layouts.fieldPlaceholderHint')}
                                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                       />
                                     </div>
@@ -778,20 +797,20 @@ export default function LayoutDesignerPage() {
                                       onChange={(e) => setFieldData({ ...fieldData, required: e.target.checked })}
                                       className="mr-2 w-4 h-4 text-blue-600 bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 rounded focus:ring-blue-500"
                                     />
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Required field</label>
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('layouts.required')}</label>
                                   </div>
                                   
                                   {(fieldData.type === 'dropdown' || fieldData.type === 'checkboxes') && (
                                     <div>
                                       <div className="flex items-center justify-between mb-3">
                                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                          Options
+                                          {t('layouts.options')}
                                         </label>
                                         <button
                                           onClick={addOption}
                                           className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
                                         >
-                                          Add Option
+                                          {t('layouts.addOption')}
                                         </button>
                                       </div>
                                       <div className="space-y-2">
@@ -799,7 +818,7 @@ export default function LayoutDesignerPage() {
                                           <div key={index} className="flex gap-2">
                                             <input
                                               type="text"
-                                              placeholder="Option Label"
+                                              placeholder={t('layouts.optionLabel')}
                                               value={option.label}
                                               onChange={(e) => updateOption(index, 'label', e.target.value)}
                                               className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -827,13 +846,13 @@ export default function LayoutDesignerPage() {
                                     }}
                                     className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                                   >
-                                    Cancel
+                                    {t('common.cancel')}
                                   </button>
                                   <button
                                     onClick={() => handleSaveField(section.id, field.id)}
                                     className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
                                   >
-                                    Save Changes
+                                    {t('layouts.saveChanges')}
                                   </button>
                                 </div>
                               </div>
@@ -858,7 +877,7 @@ export default function LayoutDesignerPage() {
                                 field.type === 'checkboxes' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700' :
                                 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-500'
                               }`}>
-                                {field.type}
+                                {getFieldTypeLabel(field.type)}
                               </span>
                             </div>
                             
@@ -950,7 +969,7 @@ export default function LayoutDesignerPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add Another Section
+                {t('layouts.addAnotherSection')}
               </button>
             </div>
           </div>
@@ -963,10 +982,10 @@ export default function LayoutDesignerPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-                Copy Section
+                {t('layouts.copySection')}
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Choose which layout to copy this section to:
+                {t('layouts.chooseLayoutToCopySection')}
               </p>
               
               <div className="space-y-2 mb-6">
@@ -1004,14 +1023,14 @@ export default function LayoutDesignerPage() {
                   }}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={executeCopySection}
                   disabled={!targetLayoutId}
                   className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                 >
-                  Copy Section
+                  {t('layouts.copySection')}
                 </button>
               </div>
             </div>
@@ -1025,16 +1044,16 @@ export default function LayoutDesignerPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg">
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-                Copy Field
+                {t('layouts.copyField')}
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-4">
-                Choose which section to copy this field to:
+                {t('layouts.chooseSectionToCopyField')}
               </p>
               
               {/* Layout Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Target Layout
+                  {t('layouts.targetLayout')}
                 </label>
                 <select
                   value={targetLayoutId}
@@ -1044,7 +1063,7 @@ export default function LayoutDesignerPage() {
                   }}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  <option value="">Select a layout...</option>
+                  <option value="">{t('layouts.selectLayout')}</option>
                   {availableLayouts.map((layout) => (
                     <option key={layout.id} value={layout.id}>
                       {layout.name}
@@ -1057,19 +1076,19 @@ export default function LayoutDesignerPage() {
               {targetLayoutId && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Target Section
+                    {t('layouts.targetSection')}
                   </label>
                   <select
                     value={targetSectionId}
                     onChange={(e) => setTargetSectionId(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
-                    <option value="">Select a section...</option>
+                    <option value="">{t('layouts.selectSection')}</option>
                     {availableLayouts
                       .find(l => l.id === targetLayoutId)
                       ?.sections.map((section) => (
                         <option key={section.id} value={section.id}>
-                          {section.title} ({section.fields.length} fields)
+                          {section.title} ({section.fields.length} {t('layouts.fields')})
                         </option>
                       ))}
                   </select>
@@ -1086,14 +1105,14 @@ export default function LayoutDesignerPage() {
                   }}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={executeCopyField}
                   disabled={!targetLayoutId || !targetSectionId}
                   className="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                 >
-                  Copy Field
+                  {t('layouts.copyField')}
                 </button>
               </div>
             </div>
@@ -1106,11 +1125,11 @@ export default function LayoutDesignerPage() {
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md relative z-10">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Edit Section Name</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('layouts.editSection')}</h3>
               
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Section Name
+                  {t('layouts.sectionTitle')}
                 </label>
                 <input
                   type="text"
@@ -1123,7 +1142,7 @@ export default function LayoutDesignerPage() {
                       handleCancelEditSection()
                     }
                   }}
-                  placeholder="Enter section name..."
+                  placeholder={t('layouts.sectionTitlePlaceholder')}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   autoFocus
                 />
@@ -1134,14 +1153,14 @@ export default function LayoutDesignerPage() {
                   onClick={handleCancelEditSection}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => editingSection && handleSaveSection(editingSection)}
                   disabled={!sectionTitle.trim()}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200"
                 >
-                  Save Changes
+                  {t('layouts.saveChanges')}
                 </button>
               </div>
             </div>
@@ -1159,19 +1178,19 @@ export default function LayoutDesignerPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Delete Section
+                  {t('layouts.deleteSection')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-4">
-                  Are you sure you want to delete the section "<strong>{sectionToDelete.title}</strong>"?
+                  {t('layouts.deleteSectionConfirm', { sectionTitle: sectionToDelete.title })}
                 </p>
                 
                 {sectionToDelete.fields.length > 0 && (
                   <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
                     <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                      Fields that will be deleted ({sectionToDelete.fields.length}):
+                      {t('layouts.fieldsThatWillBeDeleted')} ({sectionToDelete.fields.length}):
                     </h4>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {sectionToDelete.fields.map((field, index) => (
@@ -1184,7 +1203,7 @@ export default function LayoutDesignerPage() {
                             field.type === 'checkboxes' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' :
                             'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                           }`}>
-                            {field.type}
+                            {getFieldTypeLabel(field.type)}
                           </span>
                         </div>
                       ))}
@@ -1193,7 +1212,10 @@ export default function LayoutDesignerPage() {
                 )}
                 
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  This will permanently delete the section and all <strong>{sectionToDelete.fields.length}</strong> field{sectionToDelete.fields.length !== 1 ? 's' : ''} inside it. This action cannot be undone.
+                  {t('layouts.deleteSectionWarning', {
+                    count: sectionToDelete.fields.length,
+                    plural: sectionToDelete.fields.length !== 1 ? 's' : ''
+                  })}
                 </p>
               </div>
 
@@ -1202,13 +1224,13 @@ export default function LayoutDesignerPage() {
                   onClick={handleCancelDeleteSection}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmDeleteSection}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  Delete Section
+                  {t('layouts.deleteSection')}
                 </button>
               </div>
             </div>
@@ -1226,22 +1248,22 @@ export default function LayoutDesignerPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Delete Field
+                  {t('layouts.deleteField')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-4">
-                  Are you sure you want to delete the field "<strong>{fieldToDelete.field.label}</strong>"?
+                  {t('layouts.deleteFieldConfirm', { fieldLabel: fieldToDelete.field.label })}
                 </p>
                 
                 <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
                   <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                    Field Details:
+                    {t('layouts.fieldDetails')}
                   </h4>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">Type:</span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">{t('layouts.fieldTypeLabel')}</span>
                       <span className={`px-2 py-1 text-xs font-medium rounded-lg ${
                         fieldToDelete.field.type === 'input' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
                         fieldToDelete.field.type === 'description' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
@@ -1249,13 +1271,13 @@ export default function LayoutDesignerPage() {
                         fieldToDelete.field.type === 'checkboxes' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' :
                         'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                       }`}>
-                        {fieldToDelete.field.type}
+                        {getFieldTypeLabel(fieldToDelete.field.type)}
                       </span>
                     </div>
                     
                     {fieldToDelete.field.required && (
                       <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">Required:</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">{t('layouts.required')}</span>
                         <span className="px-2 py-1 text-xs font-medium rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                           Yes
                         </span>
@@ -1264,7 +1286,7 @@ export default function LayoutDesignerPage() {
                     
                     {fieldToDelete.field.placeholder && (
                       <div className="flex items-start justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                        <span className="text-sm text-slate-600 dark:text-slate-400">Placeholder:</span>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">{t('layouts.fieldPlaceholderLabel')}</span>
                         <span className="text-sm text-slate-900 dark:text-slate-100 text-right max-w-[200px] break-words">
                           "{fieldToDelete.field.placeholder}"
                         </span>
@@ -1292,7 +1314,7 @@ export default function LayoutDesignerPage() {
                 </div>
                 
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  This action cannot be undone.
+                  {t('layouts.actionCannotBeUndone')}
                 </p>
               </div>
 
@@ -1301,13 +1323,13 @@ export default function LayoutDesignerPage() {
                   onClick={handleCancelDeleteField}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmDeleteField}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  Delete Field
+                  {t('layouts.deleteField')}
                 </button>
               </div>
             </div>

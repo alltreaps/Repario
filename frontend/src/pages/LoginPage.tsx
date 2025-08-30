@@ -1,33 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { Eye, EyeOff, Mail, Lock, User, Shield, Building, Phone, Plus, Copy, Check } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Shield, Building, Phone, Plus, Copy, Check, Globe } from 'lucide-react';
 import { z } from 'zod';
 
-// Validation schemas
-const registerExistingBusinessSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
-  fullName: z.string().min(1, 'Full name is required'),
-  phone: z.string().min(1, 'Phone number is required'),
-  businessId: z.string().uuid('Please enter a valid business ID (UUID format)')
-});
-
-const registerNewBusinessSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters long'),
-  fullName: z.string().min(1, 'Full name is required'),
-  phone: z.string().min(1, 'Phone number is required'),
-  businessName: z.string().min(1, 'Business name is required')
-});
-
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(1, 'Password is required')
-});
+// Validation schemas will be defined inside the component with translations
 
 export default function LoginPage() {
+  const { t, isRTL, setLanguage, currentLanguage } = useLanguage();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +28,36 @@ export default function LoginPage() {
 
   const { login, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Helper functions for RTL-aware classes
+  const getIconPosition = () => isRTL ? 'right-0 pr-2' : 'left-0 pl-2';
+  const getInputPadding = () => isRTL ? 'pr-10 pl-3' : 'pl-10 pr-3';
+  const getPasswordIconPosition = () => isRTL ? 'left-0 pl-2' : 'right-0 pr-2';
+  const getPasswordInputPadding = () => isRTL ? 'pl-10 pr-10' : 'pr-10 pl-10';
+  const getSpaceBetween = () => isRTL ? 'space-x-reverse' : 'space-x-4';
+  const getTextAlign = () => isRTL ? 'text-right' : 'text-left';
+
+  // Validation schemas with translations
+  const registerExistingBusinessSchema = z.object({
+    email: z.string().email(t('auth.validation.emailRequired')),
+    password: z.string().min(6, t('auth.validation.passwordMinLength')),
+    fullName: z.string().min(1, t('auth.validation.fullNameRequired')),
+    phone: z.string().min(1, t('auth.validation.phoneRequired')),
+    businessId: z.string().uuid(t('auth.validation.businessIdRequired'))
+  });
+
+  const registerNewBusinessSchema = z.object({
+    email: z.string().email(t('auth.validation.emailRequired')),
+    password: z.string().min(6, t('auth.validation.passwordMinLength')),
+    fullName: z.string().min(1, t('auth.validation.fullNameRequired')),
+    phone: z.string().min(1, t('auth.validation.phoneRequired')),
+    businessName: z.string().min(1, t('auth.validation.businessNameRequired'))
+  });
+
+  const loginSchema = z.object({
+    email: z.string().email(t('auth.validation.emailRequired')),
+    password: z.string().min(1, t('auth.validation.passwordRequired'))
+  });
 
   // Multi-tenant registration function for existing business
   const registerWithBusiness = async (email: string, password: string, fullName: string, phone: string, businessId: string) => {
@@ -242,27 +254,27 @@ export default function LoginPage() {
           // Switch to login mode to allow user to sign in
           setIsRegistering(false);
           // Show helpful message
-          setError('Registration successful! You can now log in with your credentials.');
+          setError(t('auth.registrationSuccess'));
           return; // Don't redirect, let user sign in
         }
       }
     } catch (err: unknown) {
       console.error('Authentication error:', err);
       
-      let errorMessage = 'An unexpected error occurred';
+      let errorMessage = t('auth.unexpectedError');
       
       if (err instanceof Error) {
         // Handle specific error types
         if (err.message.includes('429') || err.message.includes('Too Many Requests')) {
-          errorMessage = 'Too many registration attempts. Please wait a few minutes before trying again.';
+          errorMessage = t('auth.tooManyAttempts');
         } else if (err.message.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.';
+          errorMessage = t('auth.invalidCredentials');
         } else if (err.message.includes('Email rate limit exceeded')) {
-          errorMessage = 'Email rate limit exceeded. Please wait before trying again.';
+          errorMessage = t('auth.emailRateLimit');
         } else if (err.message.includes('Email not confirmed')) {
-          errorMessage = 'Please check your email and click the confirmation link before signing in.';
+          errorMessage = t('auth.emailNotConfirmed');
         } else if (err.message.includes('foreign key constraint')) {
-          errorMessage = 'Registration is processing. Please wait a moment and try logging in.';
+          errorMessage = t('auth.registrationProcessing');
         } else {
           errorMessage = err.message;
         }
@@ -292,11 +304,21 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-900">
       <div className="relative w-full max-w-md z-10">
         {/* Main card */}
-        <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 space-y-8 transition-all duration-300">
+        <div className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 p-8 space-y-8 transition-all duration-300 relative">
+          {/* Language switcher in top right corner */}
+          <div className="absolute top-4 right-4 z-10">
+            <button
+              onClick={() => setLanguage(currentLanguage === 'en' ? 'ar' : 'en')}
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors duration-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+              title={`Switch to ${currentLanguage === 'en' ? 'العربية' : 'English'}`}
+            >
+              <Globe className="w-5 h-5" />
+            </button>
+          </div>
           {/* Logo and header */}
           <div className="text-center space-y-4">
             {/* Logo and app name in one line */}
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center justify-center">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
                 <rect width="24" height="24" rx="6" fill="url(#gradient)"/>
                 <path d="M13.5 2.25l-7.5 9h6l-1.5 10.5 7.5-9h-6l1.5-10.5z" fill="#fde047" stroke="#facc15" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -307,18 +329,18 @@ export default function LoginPage() {
                   </linearGradient>
                 </defs>
               </svg>
-              <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+              <h1 className={`text-4xl font-bold text-blue-600 dark:text-blue-400 ${isRTL ? 'mr-4' : 'ml-4'}`}>
                 Repario
               </h1>
             </div>
             
             <div>
               <p className="text-slate-600 dark:text-slate-400 text-lg font-medium">
-                {isRegistering 
-                  ? (createNewBusiness 
-                      ? 'Create your business account and start managing invoices' 
-                      : 'Join an existing business to manage invoices')
-                  : 'Welcome back to your invoice dashboard'
+                {isRegistering
+                  ? (createNewBusiness
+                      ? t('auth.createBusinessAccount')
+                      : t('auth.joinExistingBusiness'))
+                  : t('auth.welcomeDashboard')
                 }
               </p>
             </div>
@@ -330,14 +352,14 @@ export default function LoginPage() {
               <>
                 {/* Business Creation Toggle */}
                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center space-x-3">
-                    <Plus className="h-5 w-5 text-blue-500" />
-                    <div>
+                  <div className="flex items-center">
+                    <Plus className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <div className={`${isRTL ? 'pr-3' : 'pl-8'}`}>
                       <label htmlFor="createNewBusiness" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        Create a new business
+                        {t('auth.createNewBusiness')}
                       </label>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Start fresh with your own business account
+                        {t('auth.startFreshBusiness')}
                       </p>
                     </div>
                   </div>
@@ -354,16 +376,16 @@ export default function LoginPage() {
                         setBusinessName('');
                       }}
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
+                    <div className={`w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full ${isRTL ? 'peer-checked:after:-translate-x-full' : 'peer-checked:after:translate-x-full'} after:content-[''] after:absolute after:top-[2px] ${isRTL ? 'after:right-[2px]' : 'after:left-[2px]'} after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600`}></div>
                   </label>
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Full Name
+                    {t('auth.fullName')}
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                       <User className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
                     </div>
                     <input
@@ -371,12 +393,12 @@ export default function LoginPage() {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className={`w-full pl-12 pr-4 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                      className={`w-full ${getInputPadding()} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
                         fieldErrors.fullName 
                           ? 'border-red-300 dark:border-red-600' 
                           : 'border-slate-200 dark:border-slate-600'
                       }`}
-                      placeholder="Enter your full name"
+                      placeholder={t('auth.enterFullName')}
                     />
                   </div>
                   {fieldErrors.fullName && (
@@ -386,23 +408,35 @@ export default function LoginPage() {
 
                 <div className="space-y-2">
                   <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    Phone Number
+                    {t('auth.phoneNumber')}
                   </label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                       <Phone className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
+                    </div>
+                    <div className={`absolute inset-y-0 ${isRTL ? 'left-3' : 'left-10'} flex items-center pointer-events-none z-10`}>
+                      <span className="text-sm font-medium text-slate-500 dark:text-slate-400 px-1 py-1 rounded-md">
+                        +964
+                      </span>
                     </div>
                     <input
                       id="phone"
                       type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
+                      dir="ltr"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className={`w-full pl-12 pr-4 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                      onChange={(e) => {
+                        // Only allow digits and limit to 10 characters
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setPhone(value);
+                      }}
+                      className={`w-full ${isRTL ? 'pr-10 pl-24' : 'pl-24 pr-3'} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 text-left ${
                         fieldErrors.phone 
                           ? 'border-red-300 dark:border-red-600' 
                           : 'border-slate-200 dark:border-slate-600'
                       }`}
-                      placeholder="Enter your phone number"
+                      placeholder={t('auth.enterPhoneNumber')}
                     />
                   </div>
                   {fieldErrors.phone && (
@@ -414,10 +448,10 @@ export default function LoginPage() {
                 {createNewBusiness ? (
                   <div className="space-y-2">
                     <label htmlFor="businessName" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Business Name
+                      {t('auth.businessName')}
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                      <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                         <Building className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
                       </div>
                       <input
@@ -425,28 +459,28 @@ export default function LoginPage() {
                         type="text"
                         value={businessName}
                         onChange={(e) => setBusinessName(e.target.value)}
-                        className={`w-full pl-12 pr-4 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                        className={`w-full ${getInputPadding()} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
                           fieldErrors.businessName 
                             ? 'border-red-300 dark:border-red-600' 
                             : 'border-slate-200 dark:border-slate-600'
                         }`}
-                        placeholder="Enter your business name"
+                        placeholder={t('auth.enterBusinessName')}
                       />
                     </div>
                     {fieldErrors.businessName && (
                       <p className="text-red-500 text-xs mt-1">{fieldErrors.businessName}</p>
                     )}
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      This will create a new business account with you as the admin
+                      {t('auth.adminBusinessNote')}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <label htmlFor="businessId" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Business ID
+                      {t('auth.businessId')}
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                      <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                         <Building className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
                       </div>
                       <input
@@ -454,19 +488,19 @@ export default function LoginPage() {
                         type="text"
                         value={businessId}
                         onChange={(e) => setBusinessId(e.target.value)}
-                        className={`w-full pl-12 pr-4 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                        className={`w-full ${getInputPadding()} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
                           fieldErrors.businessId 
                             ? 'border-red-300 dark:border-red-600' 
                             : 'border-slate-200 dark:border-slate-600'
                         }`}
-                        placeholder="Enter business UUID (e.g., 1e73fdc9-2cbd-487c-8c89-fb1f49d1feb6)"
+                        placeholder={t('auth.enterBusinessId')}
                       />
                     </div>
                     {fieldErrors.businessId && (
                       <p className="text-red-500 text-xs mt-1">{fieldErrors.businessId}</p>
                     )}
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Get the business ID from your business administrator
+                      {t('auth.getBusinessIdNote')}
                     </p>
                   </div>
                 )}
@@ -475,10 +509,10 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Email Address
+                {t('auth.emailAddress')}
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                   <Mail className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
                 </div>
                 <input
@@ -487,12 +521,12 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full pl-12 pr-4 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                  className={`w-full ${getInputPadding()} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
                     fieldErrors.email 
                       ? 'border-red-300 dark:border-red-600' 
                       : 'border-slate-200 dark:border-slate-600'
                   }`}
-                  placeholder="Enter your email address"
+                  placeholder={t('auth.enterEmail')}
                 />
               </div>
               {fieldErrors.email && (
@@ -502,10 +536,10 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Password
+                {t('common.password')}
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                <div className={`absolute inset-y-0 ${getIconPosition()} flex items-center pointer-events-none z-10`}>
                   <Lock className="h-5 w-5 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 transition-colors duration-200" />
                 </div>
                 <input
@@ -514,18 +548,18 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full pl-12 pr-12 py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
+                  className={`w-full ${getPasswordInputPadding()} py-4 bg-slate-50/80 dark:bg-slate-700/80 border rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-600/80 ${
                     fieldErrors.password 
                       ? 'border-red-300 dark:border-red-600' 
                       : 'border-slate-200 dark:border-slate-600'
                   }`}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.enterPassword')}
                   minLength={6}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 dark:text-slate-500 dark:hover:text-blue-400 transition-colors z-10"
+                  className={`absolute inset-y-0 ${getPasswordIconPosition()} flex items-center text-slate-400 hover:text-blue-500 dark:text-slate-500 dark:hover:text-blue-400 transition-colors z-10`}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -535,7 +569,7 @@ export default function LoginPage() {
               )}
               {isRegistering && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Password must be at least 6 characters long
+                  {t('auth.passwordMinLength')}
                 </p>
               )}
             </div>
@@ -545,8 +579,8 @@ export default function LoginPage() {
                 <div className="flex-shrink-0">
                   <Shield className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Authentication Error</p>
+                <div className={`${getTextAlign()}`}>
+                  <p className="text-sm font-medium">{t('auth.authenticationError')}</p>
                   <p className="text-xs opacity-90 mt-1">{error}</p>
                 </div>
               </div>
@@ -555,23 +589,23 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl disabled:transform-none disabled:shadow-lg flex items-center justify-center space-x-3 group"
+              className={`w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl disabled:transform-none disabled:shadow-lg flex items-center justify-center ${getSpaceBetween()} group`}
             >
               {isSubmitting && (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
               )}
-              <span className="text-lg">
-                {isSubmitting 
-                  ? (isRegistering 
-                      ? (createNewBusiness ? 'Creating Business...' : 'Creating Account...') 
-                      : 'Signing In...') 
-                  : (isRegistering 
-                      ? (createNewBusiness ? 'Create Business' : 'Join Business') 
-                      : 'Sign In')
+              <span className={`text-lg ${isRTL ? 'pr-3' : 'pl-3'}`}>
+                {isSubmitting
+                  ? (isRegistering
+                      ? (createNewBusiness ? t('auth.creatingBusiness') : t('auth.creatingAccount'))
+                      : t('auth.signingIn'))
+                  : (isRegistering
+                      ? (createNewBusiness ? t('auth.createBusiness') : t('auth.joinBusiness'))
+                      : t('auth.signIn'))
                 }
               </span>
               {!isSubmitting && (
-                <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <div className={`w-5 h-5 bg-white/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200 ${isRTL ? 'ml-3' : 'mr-3'}`}>
                   <div className="w-2 h-2 bg-white rounded-full"></div>
                 </div>
               )}
@@ -589,10 +623,10 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-green-800 dark:text-green-200">
-                    Business Created Successfully!
+                    {t('auth.businessCreatedSuccess')}
                   </h3>
                   <p className="text-sm text-green-700 dark:text-green-300">
-                    Your new business account has been set up and you're now the admin.
+                    {t('auth.businessSetupComplete')}
                   </p>
                 </div>
               </div>
@@ -600,25 +634,25 @@ export default function LoginPage() {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-green-800 dark:text-green-200 mb-2">
-                    Your Business ID (share this with team members):
+                    {t('auth.yourBusinessId')}
                   </label>
-                  <div className="flex items-center space-x-2">
+                  <div className={`flex items-center ${getSpaceBetween()}`}>
                     <div className="flex-1 p-3 bg-white dark:bg-slate-800 border border-green-300 dark:border-green-600 rounded-xl font-mono text-sm text-slate-900 dark:text-slate-100">
                       {generatedBusinessId}
                     </div>
                     <button
                       onClick={() => copyToClipboard(generatedBusinessId)}
-                      className="flex items-center space-x-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 hover:scale-105"
+                      className={`flex items-center ${getSpaceBetween()} px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 hover:scale-105`}
                     >
                       {copiedToClipboard ? (
                         <>
-                          <Check className="h-4 w-4" />
-                          <span className="text-sm font-medium">Copied!</span>
+                          <Check className="h-4 w-4 flex-shrink-0" />
+                          <span className={`text-sm font-medium ${isRTL ? 'pr-2' : 'pl-2'}`}>{t('auth.copied')}</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="h-4 w-4" />
-                          <span className="text-sm font-medium">Copy</span>
+                          <Copy className="h-4 w-4 flex-shrink-0" />
+                          <span className={`text-sm font-medium ${isRTL ? 'pr-2' : 'pl-2'}`}>{t('auth.copy')}</span>
                         </>
                       )}
                     </button>
@@ -626,11 +660,11 @@ export default function LoginPage() {
                 </div>
                 
                 <div className="text-xs text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-800/30 p-3 rounded-xl">
-                  <p className="font-medium mb-1">📋 Important:</p>
+                  <p className="font-medium mb-1">{t('auth.important')}</p>
                   <ul className="space-y-1 pl-4">
-                    <li>• Save this Business ID - team members will need it to join</li>
-                    <li>• You can find this ID later in your business settings</li>
-                    <li>• As admin, you can invite users and manage permissions</li>
+                    <li>{t('auth.saveBusinessId')}</li>
+                    <li>{t('auth.findIdLater')}</li>
+                    <li>{t('auth.adminPermissions')}</li>
                   </ul>
                 </div>
 
@@ -641,7 +675,7 @@ export default function LoginPage() {
                   }}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200"
                 >
-                  Continue to Dashboard
+                  {t('auth.continueDashboard')}
                 </button>
               </div>
             </div>
@@ -654,9 +688,9 @@ export default function LoginPage() {
               onClick={toggleMode}
               className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm font-medium transition-all duration-200 px-4 py-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              {isRegistering 
-                ? 'Already have an account? Sign in instead' 
-                : "Need to join or create a business? Create an account"
+              {isRegistering
+                ? t('auth.alreadyHaveAccount')
+                : t('auth.needJoinCreate')
               }
             </button>
           </div>
@@ -664,10 +698,10 @@ export default function LoginPage() {
 
         {/* Enhanced security badge */}
         <div className="mt-8 text-center">
-          <div className="inline-flex items-center space-x-3 text-sm text-slate-600 dark:text-slate-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-6 py-3 border border-slate-200/50 dark:border-slate-700/50">
-            <Shield className="h-5 w-5 text-blue-500" />
-            <span className="font-medium">Enterprise-grade security</span>
-            <div className="flex space-x-1">
+          <div className={`inline-flex items-center ${getSpaceBetween()} text-sm text-slate-600 dark:text-slate-400 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-6 py-3 border border-slate-200/50 dark:border-slate-700/50`}>
+            <Shield className="h-5 w-5 text-blue-500 flex-shrink-0" />
+            <span className={`font-medium ${isRTL ? 'pr-5' : 'pl-3'}`}>{t('auth.enterpriseSecurity')}</span>
+            <div className={`flex space-x-1 ${isRTL ? 'mr-5' : 'ml-1'}`}>
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-150"></div>
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-300"></div>
@@ -678,7 +712,7 @@ export default function LoginPage() {
         {/* Company footer */}
         <div className="mt-6 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            © 2025 Repario Technologies. All rights reserved.
+            {t('auth.copyright')}
           </p>
         </div>
       </div>

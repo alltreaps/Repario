@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ActionIf from './ActionIf'
+import { useTranslation } from '../contexts/LanguageContext'
 import {
   PlusIcon,
   UserGroupIcon,
@@ -15,6 +16,7 @@ import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer, type Cu
 
 export default function AccountsPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [customers, setCustomers] = useState<CustomerRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +57,7 @@ export default function AccountsPage() {
       console.error('❌ Error details:', {
         message: err.message
       })
-      setError(err.message || 'Failed to fetch customers')
+      setError(err.message || t('accounts.failedToFetchCustomers'))
     } finally {
       setLoading(false)
     }
@@ -65,7 +67,7 @@ export default function AccountsPage() {
     e.preventDefault()
     
     if (!formData.name.trim()) {
-      alert('Customer name is required')
+      alert(t('accounts.customerNameRequired'))
       return
     }
 
@@ -90,7 +92,7 @@ export default function AccountsPage() {
         message: err.message
       })
       
-      let errorMessage = 'Failed to create customer'
+      let errorMessage = t('accounts.failedToCreateCustomer')
       if (err.message) {
         errorMessage = err.message
       }
@@ -105,7 +107,7 @@ export default function AccountsPage() {
     e.preventDefault()
     
     if (!formData.name.trim() || !editingCustomer) {
-      alert('Customer name is required')
+      alert(t('accounts.customerNameRequired'))
       return
     }
 
@@ -128,7 +130,7 @@ export default function AccountsPage() {
     } catch (err: any) {
       console.error('❌ Error updating customer:', err)
       
-      let errorMessage = 'Failed to update customer'
+      let errorMessage = t('accounts.failedToUpdateCustomer')
       if (err.message) {
         errorMessage = err.message
       }
@@ -162,7 +164,7 @@ export default function AccountsPage() {
       console.log('✅ Customer deleted successfully')
     } catch (err: any) {
       console.error('❌ Error deleting customer:', err)
-      const errorMessage = err.message || 'Failed to delete customer'
+      const errorMessage = err.message || t('accounts.failedToDeleteCustomer')
       alert(`Error deleting customer: ${errorMessage}`)
       setShowDeleteConfirm(false)
       setCustomerToDelete(null)
@@ -251,10 +253,10 @@ export default function AccountsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="hidden md:block">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              Client Accounts
+              {t('accounts.title')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-              Manage your client accounts and relationships
+              {t('accounts.subtitle')}
             </p>
           </div>
           <button 
@@ -262,7 +264,7 @@ export default function AccountsPage() {
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 w-full md:w-auto justify-center"
           >
             <PlusIcon className="w-5 h-5" />
-            Add New Customer
+            {t('accounts.addNewCustomer')}
           </button>
         </div>
         
@@ -274,7 +276,7 @@ export default function AccountsPage() {
                 <UserGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Customers</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('accounts.totalCustomers')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : totalCustomers}</p>
               </div>
             </div>
@@ -286,7 +288,7 @@ export default function AccountsPage() {
                 <CheckCircleIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Active</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('accounts.active')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : activeCustomers}</p>
               </div>
             </div>
@@ -298,7 +300,7 @@ export default function AccountsPage() {
                 <CurrencyDollarIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Recent Customers</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('accounts.recentCustomers')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{loading ? '...' : customers.filter(c => new Date(c.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length}</p>
               </div>
             </div>
@@ -310,7 +312,7 @@ export default function AccountsPage() {
                 <ArrowTrendingUpIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">This Month</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('accounts.thisMonth')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">+12%</p>
               </div>
             </div>
@@ -322,7 +324,7 @@ export default function AccountsPage() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Search accounts..."
+                placeholder={t('accounts.searchAccounts')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -336,19 +338,19 @@ export default function AccountsPage() {
               <thead className="bg-slate-50 dark:bg-slate-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Customer
+                    {t('accounts.customer')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Contact
+                    {t('accounts.contact')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Address
+                    {t('accounts.address')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Created
+                    {t('accounts.created')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Actions
+                    {t('accounts.actions')}
                   </th>
                 </tr>
               </thead>
@@ -358,7 +360,7 @@ export default function AccountsPage() {
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                       <div className="flex items-center justify-center space-x-3">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                        <span className="text-sm font-medium">Loading customers...</span>
+                        <span className="text-sm font-medium">{t('accounts.loadingCustomers')}</span>
                       </div>
                     </td>
                   </tr>
@@ -366,13 +368,13 @@ export default function AccountsPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <div className="text-red-600 dark:text-red-400">
-                        <p className="font-semibold text-base">Error loading customers</p>
+                        <p className="font-semibold text-base">{t('accounts.errorLoadingCustomers')}</p>
                         <p className="text-sm mt-2 text-slate-600 dark:text-slate-400">{error}</p>
                         <button
                           onClick={fetchCustomers}
                           className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                         >
-                          Try Again
+                          {t('accounts.tryAgain')}
                         </button>
                       </div>
                     </td>
@@ -382,17 +384,17 @@ export default function AccountsPage() {
                     <td colSpan={5} className="px-6 py-16 text-center">
                       {searchTerm ? (
                         <div className="text-slate-500 dark:text-slate-400">
-                          <p className="font-semibold text-base">No customers found</p>
-                          <p className="text-sm mt-2">Try adjusting your search or filters</p>
+                          <p className="font-semibold text-base">{t('accounts.noCustomersFound')}</p>
+                          <p className="text-sm mt-2">{t('accounts.tryAdjustingSearch')}</p>
                         </div>
                       ) : (
                         <div className="max-w-md mx-auto">
                           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                             <UserGroupIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Customers Yet</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('accounts.noCustomersYet')}</h3>
                           <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            You haven't added any customers yet. Start by adding your first customer account.
+                            {t('accounts.noCustomersYetDescription')}
                           </p>
                           <ActionIf ability="clients.create">
                             <button
@@ -400,7 +402,7 @@ export default function AccountsPage() {
                               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                             >
                               <PlusIcon className="w-5 h-5" />
-                              Add Your First Customer
+                              {t('accounts.addYourFirstCustomer')}
                             </button>
                           </ActionIf>
                         </div>
@@ -424,7 +426,7 @@ export default function AccountsPage() {
                               {customer.name}
                             </div>
                             <div className="text-sm text-slate-500 dark:text-slate-400 truncate">
-                              ID: {customer.id.slice(0, 8)}...
+                              {t('accounts.id')} {customer.id.slice(0, 8)}...
                             </div>
                           </div>
                         </div>
@@ -459,7 +461,7 @@ export default function AccountsPage() {
                             <button 
                               onClick={() => handleViewCustomerHistory(customer)}
                               className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group" 
-                              title="View Customer History"
+                              title={t('accounts.viewCustomerHistory')}
                             >
                               <EyeIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             </button>
@@ -468,7 +470,7 @@ export default function AccountsPage() {
                             <button 
                               onClick={() => handleEditCustomer(customer)}
                               className="p-2.5 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200 group" 
-                              title="Edit Customer"
+                              title={t('accounts.editCustomer')}
                             >
                               <PencilSquareIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             </button>
@@ -477,7 +479,7 @@ export default function AccountsPage() {
                             <button 
                               onClick={() => handleDeleteCustomer(customer.id)}
                               className="p-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group" 
-                              title="Delete Customer"
+                              title={t('accounts.deleteCustomer')}
                             >
                               <TrashIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                             </button>
@@ -497,19 +499,19 @@ export default function AccountsPage() {
               <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                  <span>Loading customers...</span>
+                  <span>{t('accounts.loadingCustomers')}</span>
                 </div>
               </div>
             ) : error ? (
               <div className="px-6 py-8 text-center">
                 <div className="text-red-600 dark:text-red-400">
-                  <p className="font-medium">Error loading customers</p>
+                  <p className="font-medium">{t('accounts.errorLoadingCustomers')}</p>
                   <p className="text-sm mt-1">{error}</p>
                   <button
                     onClick={fetchCustomers}
                     className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    Try Again
+                    {t('accounts.tryAgain')}
                   </button>
                 </div>
               </div>
@@ -517,17 +519,17 @@ export default function AccountsPage() {
               <div className="px-6 py-16 text-center">
                 {searchTerm ? (
                   <div className="text-slate-500 dark:text-slate-400">
-                    <p className="font-medium">No customers found</p>
-                    <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                    <p className="font-medium">{t('accounts.noCustomersFound')}</p>
+                    <p className="text-sm mt-1">{t('accounts.tryAdjustingSearch')}</p>
                   </div>
                 ) : (
                   <div className="max-w-sm mx-auto">
                     <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                       <UserGroupIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Customers Yet</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('accounts.noCustomersYet')}</h3>
                     <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
-                      You haven't added any customers yet. Start by adding your first customer account.
+                      {t('accounts.noCustomersYetDescription')}
                     </p>
                     <ActionIf ability="clients.create">
                       <button
@@ -535,7 +537,7 @@ export default function AccountsPage() {
                         className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2 text-sm"
                       >
                         <PlusIcon className="w-4 h-4" />
-                        Add Your First Customer
+                        {t('accounts.addYourFirstCustomer')}
                       </button>
                     </ActionIf>
                   </div>
@@ -569,7 +571,7 @@ export default function AccountsPage() {
                             </button>
                           ) : (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                              No phone number
+                              {t('accounts.noPhoneNumber')}
                             </p>
                           )}
                           {customer.address && (
@@ -585,21 +587,21 @@ export default function AccountsPage() {
                       <button 
                         onClick={() => handleViewCustomerHistory(customer)}
                         className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" 
-                        title="View Customer History"
+                        title={t('accounts.viewCustomerHistory')}
                       >
                         <EyeIcon className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => handleEditCustomer(customer)}
                         className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" 
-                        title="Edit Customer"
+                        title={t('accounts.editCustomer')}
                       >
                         <PencilSquareIcon className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => handleDeleteCustomer(customer.id)}
                         className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" 
-                        title="Delete Customer"
+                        title={t('accounts.deleteCustomer')}
                       >
                         <TrashIcon className="w-5 h-5" />
                       </button>
@@ -618,7 +620,7 @@ export default function AccountsPage() {
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+                    {editingCustomer ? t('accounts.editCustomerTitle') : t('accounts.addNewCustomerTitle')}
                   </h3>
                   <button
                     onClick={handleCloseModal}
@@ -635,7 +637,7 @@ export default function AccountsPage() {
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Customer Name *
+                      {t('accounts.customerNameLabel')}
                     </label>
                     <input
                       type="text"
@@ -645,13 +647,13 @@ export default function AccountsPage() {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter customer name"
+                      placeholder={t('accounts.enterCustomerName')}
                     />
                   </div>
                   
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Phone Number
+                      {t('accounts.phoneNumberLabel')}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -667,7 +669,7 @@ export default function AccountsPage() {
                           setFormData(prev => ({ ...prev, phone: '+964' + value }));
                         }}
                         className="w-full pl-16 pr-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="7XXXXXXXXX"
+                        placeholder={t('accounts.phonePlaceholder')}
                         pattern="[0-9]{10}"
                         title="Phone number must be exactly 10 digits"
                       />
@@ -676,7 +678,7 @@ export default function AccountsPage() {
                   
                   <div>
                     <label htmlFor="address" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Address
+                      {t('accounts.addressLabel')}
                     </label>
                     <input
                       id="address"
@@ -684,7 +686,7 @@ export default function AccountsPage() {
                       value={formData.address}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      placeholder="Enter customer address"
+                      placeholder={t('accounts.enterCustomerAddress')}
                     />
                   </div>
                 </div>
@@ -695,7 +697,7 @@ export default function AccountsPage() {
                     onClick={handleCloseModal}
                     className="flex-1 px-4 py-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                   >
-                    Cancel
+                    {t('accounts.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -705,10 +707,10 @@ export default function AccountsPage() {
                     {(creating || editing) ? (
                       <div className="flex items-center justify-center space-x-2">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>{editingCustomer ? 'Updating...' : 'Creating...'}</span>
+                        <span>{editingCustomer ? t('accounts.updating') : t('accounts.creating')}</span>
                       </div>
                     ) : (
-                      editingCustomer ? 'Update Customer' : 'Create Customer'
+                      editingCustomer ? t('accounts.updateCustomer') : t('accounts.createCustomer')
                     )}
                   </button>
                 </div>
@@ -727,13 +729,13 @@ export default function AccountsPage() {
                     <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    Delete Customer
+                    {t('accounts.deleteCustomerTitle')}
                   </h3>
                 </div>
                 
                 <div className="mb-6">
                   <p className="text-slate-700 dark:text-slate-300 mb-4">
-                    Are you sure you want to delete "<strong>{customerToDelete.name}</strong>"?
+                    {t('accounts.deleteCustomerConfirm', { name: customerToDelete.name })}
                   </p>
                   
                   {/* Customer Summary */}
@@ -752,22 +754,22 @@ export default function AccountsPage() {
                     
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">Phone:</span>
+                        <span className="text-slate-600 dark:text-slate-400">{t('accounts.phoneLabel')}</span>
                         <span className="text-slate-900 dark:text-slate-100">{customerToDelete.phone || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">Address:</span>
+                        <span className="text-slate-600 dark:text-slate-400">{t('accounts.addressLabelShort')}</span>
                         <span className="text-slate-900 dark:text-slate-100 text-right max-w-48 truncate">{customerToDelete.address || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">Created:</span>
+                        <span className="text-slate-600 dark:text-slate-400">{t('accounts.createdLabel')}</span>
                         <span className="text-slate-900 dark:text-slate-100">{formatDate(customerToDelete.created_at)}</span>
                       </div>
                     </div>
                   </div>
                   
                   <p className="text-slate-500 dark:text-slate-400 text-sm mt-4">
-                    This action cannot be undone. All customer data will be permanently removed.
+                    {t('accounts.cannotBeUndone')}
                   </p>
                 </div>
 
@@ -776,13 +778,13 @@ export default function AccountsPage() {
                     onClick={handleCancelDelete}
                     className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                   >
-                    Cancel
+                    {t('accounts.cancel')}
                   </button>
                   <button
                     onClick={handleConfirmDelete}
                     className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                   >
-                    Delete Customer
+                    {t('accounts.deleteCustomer')}
                   </button>
                 </div>
               </div>
@@ -795,30 +797,30 @@ export default function AccountsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                Contact Customer
+                {t('accounts.contactCustomer')}
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                How would you like to contact <span className="font-medium">{selectedPhone}</span>?
+                {t('accounts.contactMethod', { phone: selectedPhone })}
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => handlePhoneAction('call')}
                   className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium flex items-center justify-center gap-2"
                 >
-                  📞 Phone Call
+                  {t('accounts.phoneCall')}
                 </button>
                 <button
                   onClick={() => handlePhoneAction('whatsapp')}
                   className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 font-medium flex items-center justify-center gap-2"
                 >
-                  💬 WhatsApp
+                  {t('accounts.whatsapp')}
                 </button>
               </div>
               <button
                 onClick={() => setShowPhoneModal(false)}
                 className="w-full mt-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 font-medium"
               >
-                Cancel
+                {t('accounts.cancel')}
               </button>
             </div>
           </div>

@@ -13,8 +13,10 @@ import {
 import { fetchInvoices, deleteInvoice, changeInvoiceStatus, type InvoiceWithRelations } from '../lib/api'
 import { getStatusMessageTemplates, composeStatusMessage, openWhatsApp } from '../lib/whatsapp'
 import WhatsAppMessagePopup from './WhatsAppMessagePopup'
+import { useLanguage } from '../contexts/LanguageContext'
 
 export default function InvoiceHistoryPage() {
+  const { t } = useLanguage()
   const [invoices, setInvoices] = useState<InvoiceWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -282,15 +284,15 @@ export default function InvoiceHistoryPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="hidden md:block">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              Invoice History
+              {t('invoices.invoiceHistory')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-              View and manage all your invoices
+              {t('invoices.viewAndManageInvoices')}
             </p>
           </div>
           <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 w-full md:w-auto justify-center">
             <ArrowDownTrayIcon className="w-5 h-5" />
-            Export All
+            {t('invoices.exportAll')}
           </button>
         </div>
 
@@ -302,7 +304,7 @@ export default function InvoiceHistoryPage() {
                 <DocumentTextIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Invoices</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('invoices.totalInvoices')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{filteredInvoices.length}</p>
               </div>
             </div>
@@ -314,7 +316,7 @@ export default function InvoiceHistoryPage() {
                 <BanknotesIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Revenue</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('invoices.totalRevenue')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {formatCurrency(filteredInvoices.reduce((sum, invoice) => sum + invoice.total_amount, 0))}
                 </p>
@@ -330,7 +332,7 @@ export default function InvoiceHistoryPage() {
                 </svg>
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Pending</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('invoices.pending')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {filteredInvoices.filter(invoice => invoice.status === 'pending').length}
                 </p>
@@ -346,7 +348,7 @@ export default function InvoiceHistoryPage() {
                 </svg>
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Working</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('invoices.working')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {filteredInvoices.filter(invoice => invoice.status === 'working').length}
                 </p>
@@ -362,7 +364,7 @@ export default function InvoiceHistoryPage() {
                 <div className="flex-1">
                   <input
                     type="text"
-                    placeholder="Search by customer name..."
+                    placeholder={t('invoices.searchByCustomerName')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -389,11 +391,11 @@ export default function InvoiceHistoryPage() {
                     {showDatePicker && (
                       <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg z-10 p-4">
                         <div className="space-y-4">
-                          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">Select Date Range</h3>
+                          <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('invoices.selectDateRange')}</h3>
                           
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">From</label>
+                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('invoices.from')}</label>
                               <input
                                 type="date"
                                 value={startDate}
@@ -402,7 +404,7 @@ export default function InvoiceHistoryPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">To</label>
+                              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('invoices.to')}</label>
                               <input
                                 type="date"
                                 value={endDate}
@@ -420,13 +422,13 @@ export default function InvoiceHistoryPage() {
                               }}
                               className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors"
                             >
-                              Clear
+                              {t('invoices.clear')}
                             </button>
                             <button
                               onClick={() => setShowDatePicker(false)}
                               className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                              Apply
+                              {t('invoices.apply')}
                             </button>
                           </div>
                         </div>
@@ -470,7 +472,7 @@ export default function InvoiceHistoryPage() {
                                   : 'text-slate-900 dark:text-slate-100'
                               }`}
                             >
-                              {status === 'All Status' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
+                              {status === 'All Status' ? t('invoices.allStatus') : t(`invoices.${status}`)}
                             </button>
                           ))}
                         </div>
@@ -488,22 +490,22 @@ export default function InvoiceHistoryPage() {
               <thead className="bg-slate-50 dark:bg-slate-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Invoice ID
+                    {t('invoices.invoiceId')}
                   </th>
                   <th className="px-8 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Client
+                    {t('invoices.client')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Amount
+                    {t('invoices.amount')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Status
+                    {t('invoices.status')}
                   </th>
                   <th className="px-4 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Date
+                    {t('invoices.date')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Actions
+                    {t('invoices.actions')}
                   </th>
                 </tr>
               </thead>
@@ -513,7 +515,7 @@ export default function InvoiceHistoryPage() {
                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                       <div className="flex items-center justify-center space-x-3">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                        <span className="text-sm font-medium">Loading invoices...</span>
+                        <span className="text-sm font-medium">{t('invoices.loadingInvoices')}</span>
                       </div>
                     </td>
                   </tr>
@@ -521,13 +523,13 @@ export default function InvoiceHistoryPage() {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center">
                       <div className="text-red-600 dark:text-red-400">
-                        <p className="font-semibold text-base">Error loading invoices</p>
+                        <p className="font-semibold text-base">{t('invoices.errorLoadingInvoices')}</p>
                         <p className="text-sm mt-2 text-slate-600 dark:text-slate-400">{error}</p>
                         <button
                           onClick={fetchInvoices}
                           className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                         >
-                          Try Again
+                          {t('invoices.tryAgain')}
                         </button>
                       </div>
                     </td>
@@ -537,24 +539,24 @@ export default function InvoiceHistoryPage() {
                     <td colSpan={6} className="px-6 py-16 text-center">
                       {searchTerm || statusFilter !== 'All Status' ? (
                         <div className="text-slate-500 dark:text-slate-400">
-                          <p className="font-semibold text-base">No invoices found</p>
-                          <p className="text-sm mt-2">Try adjusting your search or filters</p>
+                          <p className="font-semibold text-base">{t('invoices.noInvoicesFound')}</p>
+                          <p className="text-sm mt-2">{t('invoices.tryAdjustingSearch')}</p>
                         </div>
                       ) : (
                         <div className="max-w-md mx-auto">
                           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                             <DocumentTextIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Invoices Yet</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('invoices.noInvoicesYet')}</h3>
                           <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            You haven't created any invoices yet. Start by creating your first invoice to track your business transactions.
+                            {t('invoices.noInvoicesYetDescription')}
                           </p>
                           <button
                             onClick={() => window.location.href = '/invoices/new'}
                             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                           >
                             <PlusIcon className="w-5 h-5" />
-                            Create Your First Invoice
+                            {t('invoices.createYourFirstInvoice')}
                           </button>
                         </div>
                       )}
@@ -584,7 +586,7 @@ export default function InvoiceHistoryPage() {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-sm capitalize ${getStatusColor(invoice.status)}`}>
-                          {invoice.status}
+                          {t(`invoices.${invoice.status}`)}
                         </span>
                       </td>
                       <td className="px-4 py-5 whitespace-nowrap text-center">
@@ -598,7 +600,7 @@ export default function InvoiceHistoryPage() {
                           <button 
                             onClick={() => window.location.href = `/invoices/edit/${invoice.id}`}
                             className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
-                            title="Edit Invoice"
+                            title={t('invoices.editInvoice')}
                           >
                             <PencilSquareIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                           </button>
@@ -607,7 +609,7 @@ export default function InvoiceHistoryPage() {
                           <button 
                             onClick={() => openChangeStatus(invoice.id, invoice.status)}
                             className="p-2.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all duration-200 group"
-                            title="Change Status"
+                            title={t('invoices.changeStatus')}
                           >
                             <ArrowPathIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                           </button>
@@ -616,7 +618,7 @@ export default function InvoiceHistoryPage() {
                           <button 
                             onClick={() => handleDeleteInvoice(invoice.id, invoice.customers.name)}
                             className="p-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group"
-                            title="Delete Invoice"
+                            title={t('invoices.deleteInvoice')}
                           >
                             <TrashIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                           </button>
@@ -635,19 +637,19 @@ export default function InvoiceHistoryPage() {
               <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                  <span>Loading invoices...</span>
+                  <span>{t('invoices.loadingInvoices')}</span>
                 </div>
               </div>
             ) : error ? (
               <div className="px-6 py-8 text-center">
                 <div className="text-red-600 dark:text-red-400">
-                  <p className="font-medium">Error loading invoices</p>
+                  <p className="font-medium">{t('invoices.errorLoadingInvoices')}</p>
                   <p className="text-sm mt-1">{error}</p>
                   <button
                     onClick={fetchInvoices}
                     className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    Try Again
+                    {t('invoices.tryAgain')}
                   </button>
                 </div>
               </div>
@@ -655,24 +657,24 @@ export default function InvoiceHistoryPage() {
               <div className="px-6 py-12 text-center">
                 {searchTerm || statusFilter !== 'All Status' ? (
                   <div className="text-slate-500 dark:text-slate-400">
-                    <p className="font-medium">No invoices found</p>
-                    <p className="text-sm mt-1">Try adjusting your search or filters</p>
+                    <p className="font-medium">{t('invoices.noInvoicesFound')}</p>
+                    <p className="text-sm mt-1">{t('invoices.tryAdjustingSearch')}</p>
                   </div>
                 ) : (
                   <div className="max-w-sm mx-auto">
                     <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                       <DocumentTextIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Invoices Yet</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('invoices.noInvoicesYet')}</h3>
                     <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
-                      You haven't created any invoices yet. Start by creating your first invoice to track your business transactions.
+                      {t('invoices.noInvoicesYetDescription')}
                     </p>
                     <button
                       onClick={() => window.location.href = '/invoices/new'}
                       className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2 text-sm"
                     >
                       <PlusIcon className="w-4 h-4" />
-                      Create Your First Invoice
+                      {t('invoices.createYourFirstInvoice')}
                     </button>
                   </div>
                 )}
@@ -691,7 +693,7 @@ export default function InvoiceHistoryPage() {
                         </p>
                       </div>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
+                        {t(`invoices.${invoice.status}`)}
                       </span>
                     </div>
                     
@@ -703,21 +705,21 @@ export default function InvoiceHistoryPage() {
                         <button 
                           onClick={() => window.location.href = `/invoices/edit/${invoice.id}`}
                           className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                          title="Edit Invoice"
+                          title={t('invoices.editInvoice')}
                         >
                           <PencilSquareIcon className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => openChangeStatus(invoice.id, invoice.status)}
                           className="p-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                          title="Change Status"
+                          title={t('invoices.changeStatus')}
                         >
                           <ArrowPathIcon className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => handleDeleteInvoice(invoice.id, invoice.customers.name)}
                           className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete Invoice"
+                          title={t('invoices.deleteInvoice')}
                         >
                           <TrashIcon className="w-5 h-5" />
                         </button>
@@ -742,29 +744,29 @@ export default function InvoiceHistoryPage() {
                 <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                Delete Invoice
+                {t('invoices.deleteInvoiceTitle')}
               </h3>
             </div>
             
             <div className="mb-6">
               <p className="text-slate-700 dark:text-slate-300 mb-4">
-                Are you sure you want to delete the invoice for "<strong>{invoiceToDelete.customerName}</strong>"?
+                {t('invoices.deleteInvoiceConfirm', { customerName: invoiceToDelete.customerName })}
               </p>
               
               {/* Invoice Summary */}
               <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 space-y-3">
-                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Invoice Details:</h4>
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('invoices.invoiceDetailsLabel')}</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Customer:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('invoices.customerLabel')}</span>
                     <span className="font-medium text-slate-900 dark:text-slate-100">{invoiceToDelete.customerName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Amount:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('invoices.amount')}</span>
                     <span className="font-bold text-green-600 dark:text-green-400">{formatCurrency(invoiceToDelete.totalAmount)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Status:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('invoices.statusLabel')}</span>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${
                       invoiceToDelete.status === 'pending' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
                       invoiceToDelete.status === 'working' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' :
@@ -772,18 +774,18 @@ export default function InvoiceHistoryPage() {
                       invoiceToDelete.status === 'refused' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
                       'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
                     }`}>
-                      {invoiceToDelete.status}
+                      {t(`invoices.${invoiceToDelete.status}`)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Created:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('invoices.createdLabel')}</span>
                     <span className="text-slate-900 dark:text-slate-100">{formatDate(invoiceToDelete.createdAt)}</span>
                   </div>
                 </div>
               </div>
               
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-4">
-                This action cannot be undone. All invoice data will be permanently removed.
+                {t('invoices.cannotBeUndone')}
               </p>
             </div>
 
@@ -798,7 +800,7 @@ export default function InvoiceHistoryPage() {
                 onClick={handleConfirmDelete}
                 className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                Delete Invoice
+                {t('invoices.deleteInvoice')}
               </button>
             </div>
           </div>
@@ -812,7 +814,7 @@ export default function InvoiceHistoryPage() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-lg overflow-hidden">
           <div className="p-6 border-b border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Change Invoice Status</h3>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('invoices.changeInvoiceStatus')}</h3>
               <button
                 onClick={() => setShowChangeStatusForId(null)}
                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg transition-colors"
@@ -823,41 +825,41 @@ export default function InvoiceHistoryPage() {
               </button>
             </div>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Select a new status and optionally include an extra note.
+              {t('invoices.selectNewStatus')}
               {statusTemplates[newStatus]?.sendWhatsApp && statusTemplates[newStatus]?.message && (
                 <span className="text-green-600 dark:text-green-400 block mt-1">
-                  📱 WhatsApp message will be sent automatically
+                  {t('invoices.whatsappWillBeSent')}
                 </span>
               )}
             </p>
           </div>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Status</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('invoices.status')}</label>
               <select
                 value={newStatus}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={savingStatus}
               >
-                <option value="pending">Pending</option>
-                <option value="working">Working</option>
-                <option value="done">Done</option>
-                <option value="refused">Refused</option>
+                <option value="pending">{t('invoices.pending')}</option>
+                <option value="working">{t('invoices.working')}</option>
+                <option value="done">{t('invoices.done')}</option>
+                <option value="refused">{t('invoices.refused')}</option>
               </select>
               {savingStatus && (
                 <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                  <span>Saving status...</span>
+                  <span>{t('invoices.savingStatus')}</span>
                 </div>
               )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Extra Note (optional)
+                {t('invoices.extraNoteOptional')}
                 {statusTemplates[newStatus]?.sendWhatsApp && (
                   <span className="text-xs text-green-600 dark:text-green-400 ml-2">
-                    Will be added to WhatsApp message
+                    {t('invoices.willBeAddedToWhatsapp')}
                   </span>
                 )}
               </label>
@@ -866,14 +868,14 @@ export default function InvoiceHistoryPage() {
                 onChange={(e) => setExtraNote(e.target.value)}
                 rows={3}
                 placeholder={statusTemplates[newStatus]?.sendWhatsApp ? 
-                  "Add an extra message to include in the WhatsApp notification..." : 
-                  "Add an extra note for internal tracking..."
+                  t('invoices.addExtraMessage') : 
+                  t('invoices.addExtraNote')
                 }
                 className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {statusTemplates[newStatus]?.sendWhatsApp && statusTemplates[newStatus]?.message && (
                 <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                  <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">WhatsApp Message Preview:</p>
+                  <p className="text-xs font-medium text-green-800 dark:text-green-200 mb-1">{t('invoices.whatsappMessagePreview')}</p>
                   <p className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
                     {(() => {
                       const currentInvoice = invoices.find(inv => inv.id === showChangeStatusForId)
@@ -903,15 +905,15 @@ export default function InvoiceHistoryPage() {
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Send WhatsApp message to customer
+                      {t('invoices.sendWhatsappMessage')}
                     </span>
                     <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
-                      📱 Recommended
+                      {t('invoices.recommended')}
                     </span>
                   </div>
                 </label>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-7">
-                  Automatically notify the customer about the status change via WhatsApp
+                  {t('invoices.automaticallyNotify')}
                 </p>
               </div>
             )}
@@ -925,14 +927,14 @@ export default function InvoiceHistoryPage() {
               className="px-4 py-2 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               disabled={savingStatus}
             >
-              Cancel
+              {t('invoices.cancel')}
             </button>
             <button
               onClick={submitChangeStatus}
               disabled={savingStatus}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg transition-colors"
             >
-              {savingStatus ? 'Updating...' : 'Update Status'}
+              {savingStatus ? t('invoices.updating') : t('invoices.updateStatus')}
             </button>
           </div>
         </div>

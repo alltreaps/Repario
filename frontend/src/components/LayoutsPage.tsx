@@ -14,8 +14,10 @@ import {
 } from '@heroicons/react/24/solid'
 import { useState, useEffect } from 'react'
 import { fetchLayouts, saveLayout, updateLayout, deleteLayout, removeDefaultLayout, setDefaultLayout, type LayoutWithCounts } from '../lib/api'
+import { useTranslation } from '../contexts/LanguageContext'
 
 export default function LayoutsPage() {
+  const { t } = useTranslation()
   const [layouts, setLayouts] = useState<LayoutWithCounts[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -267,13 +269,13 @@ export default function LayoutsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-red-600 text-center">
-          <h2 className="text-xl font-semibold mb-2">Error</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('layouts.error')}</h2>
           <p>{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Retry
+            {t('layouts.retry')}
           </button>
         </div>
       </div>
@@ -287,10 +289,10 @@ export default function LayoutsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="hidden md:block">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              Invoice Layouts
+              {t('layouts.title')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-              Design and manage your invoice templates with ease
+              {t('layouts.subtitle')}
             </p>
           </div>
           <button
@@ -298,7 +300,7 @@ export default function LayoutsPage() {
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 w-full md:w-auto justify-center"
           >
             <PlusIcon className="w-5 h-5" />
-            Create New Layout
+            {t('layouts.createNew')}
           </button>
         </div>
 
@@ -310,7 +312,7 @@ export default function LayoutsPage() {
                 <RectangleGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Layouts</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('layouts.totalLayouts')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{layouts.length}</p>
               </div>
             </div>
@@ -322,7 +324,7 @@ export default function LayoutsPage() {
                 <RectangleStackIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Sections</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('layouts.totalSections')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {layouts.reduce((total, layout) => total + (layout.layout_sections?.length || 0), 0)}
                 </p>
@@ -336,7 +338,7 @@ export default function LayoutsPage() {
                 <Squares2X2Icon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Fields</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('layouts.totalFields')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {layouts.reduce((total, layout) => 
                     total + (layout.layout_sections?.reduce((sectionTotal, section) => 
@@ -352,7 +354,7 @@ export default function LayoutsPage() {
                 <NumberedListIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Options</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('layouts.totalOptions')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {layouts.reduce((total, layout) => 
                     total + (layout.layout_sections?.reduce((sectionTotal, section) => 
@@ -369,7 +371,7 @@ export default function LayoutsPage() {
           <div className="text-center py-16">
             <div className="flex items-center justify-center space-x-2">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="text-slate-500 dark:text-slate-400 text-lg">Loading layouts...</span>
+              <span className="text-slate-500 dark:text-slate-400 text-lg">{t('layouts.loading')}</span>
             </div>
           </div>
         ) : layouts.length === 0 ? (
@@ -377,10 +379,9 @@ export default function LayoutsPage() {
             <div className="mx-auto w-20 h-20 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-6 shadow-lg">
               <DocumentTextIcon className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">No Invoice Layouts Yet</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">{t('layouts.noLayouts')}</h3>
             <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto leading-relaxed">
-              Invoice layouts are templates that define the structure and fields of your invoices. 
-              Create your first layout to start designing professional invoices with custom fields and sections.
+              {t('layouts.noLayoutsDescription')}
             </p>
             <ActionIf ability="layouts.create">
               <button
@@ -388,27 +389,27 @@ export default function LayoutsPage() {
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-3"
               >
                 <PlusIcon className="w-6 h-6" />
-                Create Your First Layout
+                {t('layouts.createFirst')}
               </button>
             </ActionIf>
             
             {/* Additional helpful info */}
             <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                💡 <strong>Pro tip:</strong> Layouts help you:
+                {t('layouts.proTip')}
               </p>
               <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <RectangleStackIcon className="w-4 h-4 text-blue-500" />
-                  <span>Organize invoice fields</span>
+                  <span>{t('layouts.organizeFields')}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <DocumentTextIcon className="w-4 h-4 text-blue-500" />
-                  <span>Create consistent templates</span>
+                  <span>{t('layouts.createTemplates')}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg">
                   <CheckCircleIcon className="w-4 h-4 text-blue-500" />
-                  <span>Save time on invoices</span>
+                  <span>{t('layouts.saveTime')}</span>
                 </div>
               </div>
             </div>
@@ -421,7 +422,7 @@ export default function LayoutsPage() {
                 {/* Default Badge - Top Right Corner */}
                 {layout.is_default && editingLayout !== layout.id && (
                   <span className="absolute top-4 right-4 inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-sm bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    DEFAULT
+                    {t('layouts.default')}
                   </span>
                 )}
                 
@@ -446,15 +447,15 @@ export default function LayoutsPage() {
                 <div className="flex items-center gap-4 mb-6 text-sm text-slate-600 dark:text-slate-400">
                   <div className="flex items-center gap-1">
                     <RectangleStackIcon className="w-4 h-4" />
-                    <span>Sections: {layout.layout_sections?.length || 0}</span>
+                    <span>{t('layouts.sections')}: {layout.layout_sections?.length || 0}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Squares2X2Icon className="w-4 h-4 text-slate-500" />
-                    <span>Fields: {layout.layout_sections?.reduce((total, section) => total + (section.layout_fields?.length || 0), 0) || 0}</span>
+                    <span>{t('layouts.fields')}: {layout.layout_sections?.reduce((total, section) => total + (section.layout_fields?.length || 0), 0) || 0}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <NumberedListIcon className="w-4 h-4 text-slate-500" />
-                    <span>Options: {layout.layout_sections?.reduce((total, section) => 
+                    <span>{t('layouts.options')}: {layout.layout_sections?.reduce((total, section) => 
                       total + (section.layout_fields?.reduce((fieldTotal, field) => 
                         fieldTotal + (field.layout_field_options?.length || 0), 0) || 0), 0) || 0}</span>
                   </div>
@@ -467,7 +468,7 @@ export default function LayoutsPage() {
                       to={`/layouts/${layout.id}`}
                       className="flex-1 min-w-0 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-xl transition-all duration-200 text-center"
                     >
-                      Edit
+                      {t('layouts.edit')}
                     </Link>
                   </ActionIf>
                   
@@ -475,7 +476,7 @@ export default function LayoutsPage() {
                     <button
                       onClick={() => handleDuplicate(layout)}
                       className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-xl transition-all duration-200"
-                      title="Duplicate"
+                      title={t('layouts.duplicate')}
                     >
                       <Square2StackIcon className="w-4 h-4 text-slate-500" />
                     </button>
@@ -486,7 +487,7 @@ export default function LayoutsPage() {
                       <button
                         onClick={() => handleSetDefault(layout.id)}
                         className="px-4 py-2 bg-emerald-100 dark:bg-emerald-900 hover:bg-emerald-200 dark:hover:bg-emerald-800 text-emerald-700 dark:text-emerald-300 text-sm font-medium rounded-xl transition-all duration-200"
-                        title="Set as Default"
+                        title={t('layouts.setDefault')}
                       >
                         <CheckCircleIcon className="w-4 h-4 text-emerald-600" />
                       </button>
@@ -496,7 +497,7 @@ export default function LayoutsPage() {
                       <button
                         onClick={() => handleRemoveDefault(layout.id)}
                         className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-xl transition-all duration-200"
-                        title="Remove Default"
+                        title={t('layouts.removeDefault')}
                       >
                         <CheckCircleIcon className="w-4 h-4 text-slate-400" />
                       </button>
@@ -507,7 +508,7 @@ export default function LayoutsPage() {
                     <button
                       onClick={() => handleDelete(layout.id)}
                       className="px-4 py-2 bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-700 dark:text-red-300 text-sm font-medium rounded-xl transition-all duration-200"
-                      title="Delete"
+                      title={t('layouts.delete')}
                     >
                       <TrashIcon className="w-4 h-4 text-red-500" />
                     </button>
@@ -524,11 +525,11 @@ export default function LayoutsPage() {
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md relative z-10">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Create New Layout</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('layouts.createModalTitle')}</h3>
               
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Layout Name
+                  {t('layouts.layoutName')}
                 </label>
                 <input
                   type="text"
@@ -541,7 +542,7 @@ export default function LayoutsPage() {
                       handleCreateModalCancel()
                     }
                   }}
-                  placeholder="Enter layout name..."
+                  placeholder={t('layouts.layoutNamePlaceholder')}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   autoFocus
                 />
@@ -552,14 +553,14 @@ export default function LayoutsPage() {
                   onClick={handleCreateModalCancel}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleCreateModalSave}
                   disabled={!newLayoutName.trim()}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200"
                 >
-                  Create Layout
+                  {t('layouts.create')}
                 </button>
               </div>
             </div>
@@ -572,11 +573,11 @@ export default function LayoutsPage() {
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md relative z-10">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Edit Layout Name</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{t('layouts.editModalTitle')}</h3>
               
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Layout Name
+                  {t('layouts.layoutName')}
                 </label>
                 <input
                   type="text"
@@ -589,7 +590,7 @@ export default function LayoutsPage() {
                       handleCancelRename()
                     }
                   }}
-                  placeholder="Enter layout name..."
+                  placeholder={t('layouts.layoutNamePlaceholder')}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   autoFocus
                 />
@@ -600,14 +601,14 @@ export default function LayoutsPage() {
                   onClick={handleCancelRename}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => editingLayout && handleSaveRename(editingLayout)}
                   disabled={!editName.trim()}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200"
                 >
-                  Save Changes
+                  {t('layouts.saveChanges')}
                 </button>
               </div>
             </div>
@@ -625,34 +626,34 @@ export default function LayoutsPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Delete Layout
+                  {t('layouts.deleteModalTitle')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-4">
-                  Are you sure you want to delete the layout "<strong>{layoutToSimpleDelete.name}</strong>"?
+                  {t('layouts.deleteConfirm', { layoutName: layoutToSimpleDelete.name })}
                 </p>
                 
                 {/* Layout Summary */}
                 <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 space-y-3">
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Layout Details:</h4>
+                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('layouts.layoutDetails')}</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Sections:</span>
+                      <span className="text-slate-600 dark:text-slate-400">{t('layouts.sectionsCount')}</span>
                       <span className="font-medium text-slate-900 dark:text-slate-100">{layoutToSimpleDelete.layout_sections?.length || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Fields:</span>
+                      <span className="text-slate-600 dark:text-slate-400">{t('layouts.fieldsCount')}</span>
                       <span className="font-medium text-slate-900 dark:text-slate-100">
                         {layoutToSimpleDelete.layout_sections?.reduce((total, section) => total + (section.layout_fields?.length || 0), 0) || 0}
                       </span>
                     </div>
                     {layoutToSimpleDelete.is_default && (
                       <div className="flex justify-between">
-                        <span className="text-slate-600 dark:text-slate-400">Status:</span>
+                        <span className="text-slate-600 dark:text-slate-400">{t('layouts.status')}</span>
                         <span className="inline-flex items-center px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          DEFAULT
+                          {t('layouts.default')}
                         </span>
                       </div>
                     )}
@@ -680,7 +681,7 @@ export default function LayoutsPage() {
                 </div>
                 
                 <p className="text-slate-500 dark:text-slate-400 text-sm mt-4">
-                  This action cannot be undone.
+                  {t('layouts.cannotBeUndone')}
                 </p>
               </div>
 
@@ -689,13 +690,13 @@ export default function LayoutsPage() {
                   onClick={handleCancelSimpleDelete}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmSimpleDelete}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  Delete Layout
+                  {t('layouts.delete')}
                 </button>
               </div>
             </div>
@@ -713,32 +714,31 @@ export default function LayoutsPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Layout is Being Used
+                  {t('layouts.inUseModalTitle')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-4">
-                  The layout "<strong>{layoutToDelete.name}</strong>" cannot be deleted because it is being used by{' '}
-                  <strong>{deleteConfirmInfo.invoiceCount}</strong> invoice{deleteConfirmInfo.invoiceCount !== 1 ? 's' : ''}.
+                  {t('layouts.inUseDescription', { layoutName: layoutToDelete.name, count: deleteConfirmInfo.invoiceCount, plural: deleteConfirmInfo.invoiceCount !== 1 ? 's' : '' })}
                 </p>
                 
                 {deleteConfirmInfo.availableLayouts.length > 0 ? (
                   <div className="space-y-4">
                     <p className="text-slate-700 dark:text-slate-300">
-                      You can reassign these invoices to another layout before deleting:
+                      {t('layouts.reassignTo')}
                     </p>
                     
                     <div>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Reassign invoices to:
+                        {t('layouts.selectLayout')}
                       </label>
                       <select
                         value={reassignLayoutId}
                         onChange={(e) => setReassignLayoutId(e.target.value)}
                         className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       >
-                        <option value="">Select a layout...</option>
+                        <option value="">{t('layouts.selectLayout')}</option>
                         {deleteConfirmInfo.availableLayouts.map((layout) => (
                           <option key={layout.id} value={layout.id}>
                             {layout.name}
@@ -750,11 +750,10 @@ export default function LayoutsPage() {
                 ) : (
                   <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                     <p className="text-yellow-800 dark:text-yellow-200 text-sm mb-3">
-                      You have no other layouts to reassign invoices to. 
+                      {t('layouts.noOtherLayouts')}
                     </p>
                     <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                      <strong>Force deleting</strong> will remove the layout and set the layout reference in invoices to "No Layout". 
-                      The invoices will remain but won't have a specific layout template.
+                      <strong>{t('layouts.forceDelete')}</strong> {t('layouts.forceDeleteWarning')}
                     </p>
                   </div>
                 )}
@@ -765,7 +764,7 @@ export default function LayoutsPage() {
                   onClick={handleCancelDelete}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 
                 {deleteConfirmInfo.availableLayouts.length > 0 ? (
@@ -774,14 +773,14 @@ export default function LayoutsPage() {
                     disabled={!reassignLayoutId}
                     className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:shadow-none transition-all duration-200"
                   >
-                    Reassign & Delete
+                    {t('layouts.reassignAndDelete')}
                   </button>
                 ) : (
                   <button
                     onClick={() => handleConfirmDelete(true)}
                     className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                   >
-                    Force Delete
+                    {t('layouts.forceDelete')}
                   </button>
                 )}
               </div>

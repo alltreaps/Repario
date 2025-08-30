@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { useLayoutContext } from '../contexts/LayoutContext'
+import { useLanguage } from '../contexts/LanguageContext'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { cn } from '../lib/utils'
 import {
   HomeIcon,
@@ -23,47 +25,7 @@ interface AppShellProps {
   children: ReactNode
 }
 
-const navigation = [
-  {
-    name: 'Dashboard',
-    href: '/home',
-    icon: <HomeIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Invoices',
-    href: '/invoices',
-    icon: <DocumentTextIcon className="w-5 h-5" />,
-    children: [
-      { name: 'New Invoice', href: '/invoices/new' },
-      { name: 'History', href: '/invoices/history' },
-    ],
-  },
-  {
-    name: 'Layouts',
-    href: '/layouts',
-    icon: <RectangleGroupIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Inventory',
-    href: '/items',
-    icon: <CubeIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Clients',
-    href: '/accounts',
-    icon: <UsersIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Users',
-    href: '/users',
-    icon: <UserGroupIcon className="w-5 h-5" />,
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: <Cog6ToothIcon className="w-5 h-5" />,
-  },
-]
+// Navigation items will be generated inside the component to access translations
 
 export default function AppShell({ children }: AppShellProps) {
   const location = useLocation()
@@ -72,6 +34,50 @@ export default function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>(['Invoices'])
   const { isDark, toggleTheme } = useTheme()
+  const { t, isRTL } = useLanguage()
+
+  // Navigation items with translations
+  const navigation = [
+    {
+      name: t('navigation.dashboard'),
+      href: '/home',
+      icon: <HomeIcon className="w-5 h-5" />, 
+    },
+    {
+      name: t('navigation.invoices'),
+      href: '/invoices',
+      icon: <DocumentTextIcon className="w-5 h-5" />,
+      children: [
+        { name: t('invoices.addInvoice'), href: '/invoices/new' },
+        { name: t('invoices.title'), href: '/invoices/history' },
+      ],
+    },
+    {
+      name: t('navigation.layouts'),
+      href: '/layouts',
+      icon: <RectangleGroupIcon className="w-5 h-5" />, 
+    },
+    {
+      name: t('navigation.inventory'),
+      href: '/items',
+      icon: <CubeIcon className="w-5 h-5" />, 
+    },
+    {
+      name: t('navigation.customers'),
+      href: '/accounts',
+      icon: <UsersIcon className="w-5 h-5" />, 
+    },
+    {
+      name: t('navigation.users'),
+      href: '/users',
+      icon: <UserGroupIcon className="w-5 h-5" />, 
+    },
+    {
+      name: t('common.settings'),
+      href: '/settings',
+      icon: <Cog6ToothIcon className="w-5 h-5" />, 
+    },
+  ]
 
   const toggleExpanded = (name: string) => {
     setExpandedItems(prev => 
@@ -95,38 +101,39 @@ export default function AppShell({ children }: AppShellProps) {
   const getPageName = (pathname: string) => {
     switch (pathname) {
       case '/home':
-        return 'Dashboard'
+        return t('navigation.dashboard')
       case '/invoices/new':
-        return 'New Invoice'
+        return t('invoices.addInvoice')
       case '/invoices/history':
-        return 'Invoice History'
+        return t('invoices.title')
       case '/items':
         return 'Inventory'
       case '/layouts':
         return 'Layouts'
       case '/accounts':
-        return 'Clients'
+        return t('navigation.customers')
       case '/users':
-        return 'User Management'
+        return 'Users'
       default:
         if (pathname.startsWith('/layouts/')) {
           return currentLayoutName || 'Layout Designer'
         }
         if (pathname.startsWith('/invoices/edit/')) {
-          return 'Edit Invoice'
+          return t('invoices.editInvoice')
         }
         if (pathname.startsWith('/accounts/history/')) {
-          return currentLayoutName || 'Customer History'
+          return currentLayoutName || t('customers.customerDetails')
         }
         if (pathname.startsWith('/invoices')) {
-          return 'Invoices'
+          return t('navigation.invoices')
         }
         return 'Repario'
     }
   }
 
+  const dir = document.documentElement.dir;
   return (
-    <div className="h-screen flex bg-slate-50 dark:bg-slate-900">
+    <div className="h-screen flex bg-slate-50 dark:bg-slate-900" dir={dir}>
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
@@ -139,8 +146,12 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        `fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} z-50 w-64 bg-white dark:bg-slate-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`,
+        sidebarOpen
+          ? "translate-x-0"
+          : isRTL
+            ? "translate-x-full"
+            : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -176,24 +187,32 @@ export default function AppShell({ children }: AppShellProps) {
                           : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                       )}
                     >
-                      <div className="flex items-center">
-                        {item.icon}
-                        <span className="ml-3">{item.name}</span>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          {item.icon}
+                          <span className={isRTL ? "mr-[10px]" : "ml-3"}>{item.name}</span>
+                        </div>
+                        <svg
+                          className={cn(
+                            "w-4 h-4 transition-transform",
+                            isRTL
+                              ? expandedItems.includes(item.name)
+                                ? "rotate-89"
+                                : "rotate-180"
+                              : expandedItems.includes(item.name)
+                                ? "rotate-90"
+                                : ""
+                          )}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
-                      <svg
-                        className={cn(
-                          "w-4 h-4 transition-transform",
-                          expandedItems.includes(item.name) ? "rotate-90" : ""
-                        )}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
                     </button>
                     {expandedItems.includes(item.name) && (
-                      <div className="mt-2 ml-6 space-y-1">
+                      <div className={isRTL ? "mt-2 mr-6 space-y-1" : "mt-2 ml-6 space-y-1"}>
                         {item.children.map((child) => (
                           <Link
                             key={child.name}
@@ -228,14 +247,22 @@ export default function AppShell({ children }: AppShellProps) {
                     }}
                   >
                     {item.icon}
-                    <span className="ml-3">{item.name}</span>
+                        <span className={isRTL ? "mr-[10px]" : "ml-3"}>{item.name}</span>
                   </Link>
                 )}
               </div>
             ))}
           </nav>
-          {/* Theme toggle fixed above user section */}
-          <div className="px-4 pb-4">
+          {/* Language and Theme controls fixed above user section */}
+          <div className="px-4 pb-4 space-y-3">
+            {/* Language switcher */}
+            <div className="mb-4">
+              <LanguageSwitcher 
+                variant="toggle" 
+                className="w-full justify-center bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 hover:from-slate-200 hover:to-slate-100 dark:hover:from-slate-600 dark:hover:to-slate-500 transition-all duration-300 transform hover:scale-[1.02] shadow-sm hover:shadow-md border border-slate-200/50 dark:border-slate-500/30 rounded-xl py-3"
+              />
+            </div>
+            
             {/* Theme toggle */}
             <div className="mb-0">
               <button
@@ -255,23 +282,26 @@ export default function AppShell({ children }: AppShellProps) {
                     )}
                   </div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {isDark ? 'Dark mode' : 'Light mode'}
+                    {isDark ? t('common.darkMode') : t('common.lightMode')}
                   </span>
                 </div>
                 
                 {/* Custom toggle switch */}
-                <div className={cn(
-                  "relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 shadow-inner",
-                  isDark 
-                    ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20" 
-                    : "bg-gradient-to-r from-slate-300 to-slate-400 shadow-slate-400/20"
-                )}>
+                <div
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 shadow-inner",
+                    isRTL && "flex-row-reverse",
+                    isDark
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20"
+                      : "bg-gradient-to-r from-slate-300 to-slate-400 shadow-slate-400/20"
+                  )}
+                >
                   <div
                     className={cn(
                       "inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-all duration-300 border-2",
-                      isDark 
-                        ? "translate-x-5 border-blue-200 shadow-blue-500/30" 
-                        : "translate-x-0.5 border-slate-200 shadow-slate-500/20"
+                      isDark
+                        ? (isRTL ? "translate-x-0 border-blue-200 shadow-blue-500/30" : "translate-x-5 border-blue-200 shadow-blue-500/30")
+                        : (isRTL ? "translate-x-6 border-slate-200 shadow-slate-500/20" : "translate-x-0.5 border-slate-200 shadow-slate-500/20")
                     )}
                   >
                     {/* Inner icon */}
@@ -354,7 +384,7 @@ export default function AppShell({ children }: AppShellProps) {
             </div>
             
             <div className="text-sm font-medium text-slate-600 dark:text-slate-400 z-10">
-              {location.pathname === '/settings' ? 'Settings' : getPageName(location.pathname)}
+              {location.pathname === '/settings' ? t('common.settings') : getPageName(location.pathname)}
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ import {
   Square3Stack3DIcon
 } from '@heroicons/react/24/solid'
 import { fetchItems, createItem, updateItem, deleteItem, type ItemRow } from '../lib/api'
+import { useTranslation } from '../contexts/LanguageContext'
 
 export default function ItemsPage() {
   const [items, setItems] = useState<ItemRow[]>([])
@@ -37,6 +38,8 @@ export default function ItemsPage() {
     sku: '',
     category: ''
   })
+
+  const { t } = useTranslation()
 
   // Fetch items from Supabase
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function ItemsPage() {
         setCategories(uniqueCategories)
       } catch (err: any) {
         console.error('❌ Error fetching items:', err)
-        setError(err.message || 'Failed to fetch items')
+        setError(err.message || t('items.failedToFetchItems'))
       } finally {
         setLoading(false)
       }
@@ -90,7 +93,7 @@ export default function ItemsPage() {
       resetForm()
     } catch (err: any) {
       console.error('❌ Error creating item:', err)
-      setError(err.message || 'Failed to create item')
+      setError(err.message || t('items.failedToCreateItem'))
     }
   }
 
@@ -134,7 +137,7 @@ export default function ItemsPage() {
       resetForm()
     } catch (err: any) {
       console.error('❌ Error updating item:', err)
-      setError(err.message || 'Failed to update item')
+      setError(err.message || t('items.failedToUpdateItem'))
     }
   }
 
@@ -161,7 +164,7 @@ export default function ItemsPage() {
       console.log('✅ Item deleted successfully')
     } catch (err: any) {
       console.error('❌ Error deleting item:', err)
-      setError(err.message || 'Failed to delete item')
+      setError(err.message || t('items.failedToDeleteItem'))
       setShowDeleteConfirm(false)
       setItemToDelete(null)
     }
@@ -238,7 +241,7 @@ export default function ItemsPage() {
       console.log('✅ Batch delete completed')
     } catch (err: any) {
       console.error('❌ Error in batch delete:', err)
-      setError(err.message || 'Failed to delete items')
+      setError(err.message || t('items.failedToDeleteItems'))
       setShowBulkDeleteConfirm(false)
     }
   }
@@ -284,7 +287,7 @@ export default function ItemsPage() {
       console.log('✅ Batch category update completed')
     } catch (err: any) {
       console.error('❌ Error in batch category update:', err)
-      setError(err.message || 'Failed to update item categories')
+      setError(err.message || t('items.failedToUpdateCategories'))
     }
   }
 
@@ -295,10 +298,10 @@ export default function ItemsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="hidden md:block">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              Inventory
+              {t('items.title')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-              Manage your products and services catalog with ease
+              {t('items.subtitle')}
             </p>
           </div>
           <button
@@ -306,7 +309,7 @@ export default function ItemsPage() {
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 w-full md:w-auto justify-center"
           >
             <PlusIcon className="w-5 h-5" />
-            Add New Item
+            {t('items.addNewItem')}
           </button>
         </div>
 
@@ -318,7 +321,7 @@ export default function ItemsPage() {
                 <CubeIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Items</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('items.totalItems')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{items.length}</p>
               </div>
             </div>
@@ -329,7 +332,7 @@ export default function ItemsPage() {
                 <TagIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Categories</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('items.categories')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{categories.length}</p>
               </div>
             </div>
@@ -340,7 +343,7 @@ export default function ItemsPage() {
                 <CurrencyDollarIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total Value</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('items.totalValue')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   ${items
                     .filter(item => item.sku && parseFloat(item.sku) > 0)
@@ -356,7 +359,7 @@ export default function ItemsPage() {
                 <Square3Stack3DIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Total SKU</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('items.totalSku')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {items.reduce((sum, item) => sum + parseFloat(item.sku || '0'), 0)}
                 </p>
@@ -371,13 +374,13 @@ export default function ItemsPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {selectedItems.size} item{selectedItems.size !== 1 ? 's' : ''} selected
+                  {selectedItems.size} {t('items.itemsSelected', { plural: selectedItems.size !== 1 ? 's' : '' })}
                 </div>
                 <button
                   onClick={() => setSelectedItems(new Set())}
                   className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
                 >
-                  Clear selection
+                  {t('items.clearSelection')}
                 </button>
               </div>
               
@@ -388,7 +391,7 @@ export default function ItemsPage() {
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
                   >
                     <TrashIcon className="w-4 h-4" />
-                    Delete Selected
+                    {t('items.deleteSelected')}
                   </button>
                 </ActionIf>
                 
@@ -399,7 +402,7 @@ export default function ItemsPage() {
                       onChange={(e) => setBatchCategoryValue(e.target.value)}
                       className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm"
                     >
-                      <option value="">Change category...</option>
+                      <option value="">{t('items.changeCategory')}</option>
                       {categories.map((category) => (
                         <option key={category} value={category}>
                           {category}
@@ -411,7 +414,7 @@ export default function ItemsPage() {
                       disabled={!batchCategoryValue}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium text-sm transition-colors"
                     >
-                      Apply
+                      {t('items.apply')}
                     </button>
                   </div>
                 </ActionIf>
@@ -428,7 +431,7 @@ export default function ItemsPage() {
                 <div className="flex-1">
                   <input
                     type="text"
-                    placeholder="Search items by name..."
+                    placeholder={t('items.searchItems')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -441,7 +444,7 @@ export default function ItemsPage() {
                       className={`h-10 w-10 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-center relative ${
                         selectedCategory !== 'all' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' : ''
                       }`}
-                      title="Filter by category"
+                      title={t('items.filterByCategory')}
                     >
                       <FunnelIcon className={`w-4 h-4 ${
                         selectedCategory !== 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'
@@ -463,7 +466,7 @@ export default function ItemsPage() {
                                   : 'text-slate-900 dark:text-slate-100'
                               }`}
                             >
-                              {name === 'all' ? 'All Categories' : name.charAt(0).toUpperCase() + name.slice(1)}
+                              {name === 'all' ? t('items.allCategories') : name.charAt(0).toUpperCase() + name.slice(1)}
                             </button>
                           ))}
                         </div>
@@ -489,19 +492,19 @@ export default function ItemsPage() {
                         />
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Item Name
+                        {t('items.itemName')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Price
+                        {t('items.price')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        SKU
+                        {t('items.sku')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Category
+                        {t('items.category')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Actions
+                        {t('items.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -510,7 +513,7 @@ export default function ItemsPage() {
                       <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                         <div className="flex items-center justify-center space-x-2">
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                          <span>Loading items...</span>
+                          <span>{t('items.loadingItems')}</span>
                         </div>
                       </td>
                     </tr>
@@ -523,7 +526,7 @@ export default function ItemsPage() {
                 <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                   <div className="flex items-center justify-center space-x-2">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    <span>Loading items...</span>
+                    <span>{t('items.loadingItems')}</span>
                   </div>
                 </div>
               </div>
@@ -544,19 +547,19 @@ export default function ItemsPage() {
                         />
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Item Name
+                        {t('items.itemName')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Price
+                        {t('items.price')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        SKU
+                        {t('items.sku')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Category
+                        {t('items.category')}
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                        Actions
+                        {t('items.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -571,15 +574,15 @@ export default function ItemsPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                               </div>
-                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No items found</h3>
+                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsFound')}</h3>
                               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                                No items match "{searchQuery}". Try adjusting your search or clear the filter.
+                                {t('items.noItemsMatch', { query: searchQuery })}
                               </p>
                               <button
                                 onClick={() => setSearchQuery('')}
                                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                               >
-                                Clear Search
+                                {t('items.clearSearch')}
                               </button>
                             </div>
                           ) : selectedCategory === 'all' ? (
@@ -587,9 +590,9 @@ export default function ItemsPage() {
                               <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                                 <TagIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                               </div>
-                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Items Yet</h3>
+                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsYet')}</h3>
                               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                                You haven't created any items yet. Start by creating your first item to build your product and services catalog.
+                                {t('items.noItemsDescription')}
                               </p>
                               <ActionIf ability="items.create">
                                 <button
@@ -597,7 +600,7 @@ export default function ItemsPage() {
                                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                                 >
                                   <PlusIcon className="w-5 h-5" />
-                                  Create Your First Item
+                                  {t('items.createFirstItem')}
                                 </button>
                               </ActionIf>
                             </div>
@@ -606,9 +609,9 @@ export default function ItemsPage() {
                               <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                                 <FunnelIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                               </div>
-                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No items in {selectedCategory}</h3>
+                              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsInCategory', { category: selectedCategory })}</h3>
                               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                                Add some items to the {selectedCategory} category to see them here.
+                                {t('items.addItemsToCategory', { category: selectedCategory })}
                               </p>
                               <ActionIf ability="items.create">
                                 <button
@@ -616,7 +619,7 @@ export default function ItemsPage() {
                                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                                 >
                                   <PlusIcon className="w-5 h-5" />
-                                  Add Item to {selectedCategory}
+                                  {t('items.addItemToCategory', { category: selectedCategory })}
                                 </button>
                               </ActionIf>
                             </div>
@@ -673,7 +676,7 @@ export default function ItemsPage() {
                               <button 
                                 onClick={() => handleEditItem(item)}
                                 className="p-2.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 group"
-                                title="Edit Item"
+                                title={t('items.editItemTitle')}
                               >
                                 <PencilSquareIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                               </button>
@@ -682,7 +685,7 @@ export default function ItemsPage() {
                               <button 
                                 onClick={() => handleDeleteItem(item.id)}
                                 className="p-2.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 group"
-                                title="Delete Item"
+                                title={t('items.deleteItemTitle')}
                               >
                                 <TrashIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                               </button>
@@ -706,15 +709,15 @@ export default function ItemsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                           </svg>
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No items found</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsFound')}</h3>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                          No items match "{searchQuery}". Try adjusting your search or clear the filter.
+                          {t('items.noItemsMatch', { query: searchQuery })}
                         </p>
                         <button
                           onClick={() => setSearchQuery('')}
                           className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                         >
-                          Clear Search
+                          {t('items.clearSearch')}
                         </button>
                       </div>
                     ) : selectedCategory === 'all' ? (
@@ -722,9 +725,9 @@ export default function ItemsPage() {
                         <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                           <TagIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Items Yet</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsYet')}</h3>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                          You haven't created any items yet. Start by creating your first item to build your product and services catalog.
+                          {t('items.noItemsDescription')}
                         </p>
                         <ActionIf ability="items.create">
                           <button
@@ -732,7 +735,7 @@ export default function ItemsPage() {
                             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                           >
                             <PlusIcon className="w-5 h-5" />
-                            Create Your First Item
+                            {t('items.createFirstItem')}
                           </button>
                         </ActionIf>
                       </div>
@@ -741,9 +744,9 @@ export default function ItemsPage() {
                         <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
                           <FunnelIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No items in {selectedCategory}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('items.noItemsInCategory', { category: selectedCategory })}</h3>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                          Add some items to the {selectedCategory} category to see them here.
+                          {t('items.addItemsToCategory', { category: selectedCategory })}
                         </p>
                         <ActionIf ability="items.create">
                           <button
@@ -751,7 +754,7 @@ export default function ItemsPage() {
                             className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                           >
                             <PlusIcon className="w-5 h-5" />
-                            Add Item to {selectedCategory}
+                            {t('items.addItemToCategory', { category: selectedCategory })}
                           </button>
                         </ActionIf>
                       </div>
@@ -768,7 +771,7 @@ export default function ItemsPage() {
                             </h3>
                             {item.sku && (
                               <p className="text-sm text-slate-500 dark:text-slate-400">
-                                SKU: {item.sku}
+                                {t('items.skuLabelShort')} {item.sku}
                               </p>
                             )}
                           </div>
@@ -787,14 +790,14 @@ export default function ItemsPage() {
                             <button 
                               onClick={() => handleEditItem(item)}
                               className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                              title="Edit Item"
+                              title={t('items.editItemTitle')}
                             >
                               <PencilSquareIcon className="w-5 h-5" />
                             </button>
                             <button 
                               onClick={() => handleDeleteItem(item.id)}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Delete Item"
+                              title={t('items.deleteItemTitle')}
                             >
                               <TrashIcon className="w-5 h-5" />
                             </button>
@@ -817,7 +820,7 @@ export default function ItemsPage() {
             <div className="p-6 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {editingItem ? 'Edit Item' : 'Create New Item'}
+                  {editingItem ? t('items.editItem') : t('items.createNewItem')}
                 </h3>
                 <button
                   onClick={handleCancel}
@@ -832,20 +835,20 @@ export default function ItemsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Item Name *
+                    {t('items.itemNameLabel')}
                   </label>
                   <input
                     type="text"
                     value={itemData.name}
                     onChange={(e) => setItemData({ ...itemData, name: e.target.value })}
                     className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter item name"
+                    placeholder={t('items.enterItemName')}
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    Unit Price *
+                    {t('items.unitPriceLabel')}
                   </label>
                   <input
                     type="number"
@@ -860,28 +863,28 @@ export default function ItemsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                    SKU
+                    {t('items.skuLabel')}
                   </label>
                   <input
                     type="text"
                     value={itemData.sku}
                     onChange={(e) => setItemData({ ...itemData, sku: e.target.value })}
                     className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Optional SKU"
+                    placeholder={t('items.optionalSku')}
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Category
+                      {t('items.categoryLabel')}
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowCategoryModal(true)}
                       className="text-blue-500 hover:text-blue-700 text-sm font-medium"
                     >
-                      + Add New
+                      {t('items.addNewCategory')}
                     </button>
                   </div>
                   <select
@@ -889,7 +892,7 @@ export default function ItemsPage() {
                     onChange={(e) => setItemData({ ...itemData, category: e.target.value })}
                     className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Select a category...</option>
+                    <option value="">{t('items.selectCategory')}</option>
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -901,14 +904,14 @@ export default function ItemsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Description
+                  {t('items.descriptionLabel')}
                 </label>
                 <textarea
                   value={itemData.description}
                   onChange={(e) => setItemData({ ...itemData, description: e.target.value })}
                   rows={3}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="Optional description of the item"
+                  placeholder={t('items.optionalDescription')}
                 />
               </div>
             </div>
@@ -918,14 +921,14 @@ export default function ItemsPage() {
                 onClick={handleCancel}
                 className="px-6 py-3 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
               >
-                Cancel
+                {t('items.cancel')}
               </button>
               <button
                 onClick={() => editingItem ? handleUpdateItem(editingItem) : handleCreateItem()}
                 disabled={!itemData.name.trim()}
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed"
               >
-                {editingItem ? 'Update Item' : 'Create Item'}
+                {editingItem ? t('items.updateItem') : t('items.createItem')}
               </button>
             </div>
           </div>
@@ -938,7 +941,7 @@ export default function ItemsPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md">
             <div className="p-6 border-b border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Add New Category</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('items.addNewCategoryModal')}</h3>
                 <button
                   onClick={() => {
                     setShowCategoryModal(false)
@@ -954,14 +957,14 @@ export default function ItemsPage() {
             <div className="p-6">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Category Name
+                  {t('items.categoryNameLabel')}
                 </label>
                 <input
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Web Development"
+                  placeholder={t('items.categoryExample')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleAddCategory()
@@ -979,14 +982,14 @@ export default function ItemsPage() {
                   }}
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
-                  Cancel
+                  {t('items.cancel')}
                 </button>
                 <button
                   onClick={handleAddCategory}
                   disabled={!newCategoryName.trim()}
                   className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                 >
-                  Add Category
+                  {t('items.addCategory')}
                 </button>
               </div>
             </div>
@@ -1004,18 +1007,25 @@ export default function ItemsPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Delete Selected Items
+                  {t('items.deleteSelectedItems')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-4">
-                  Are you sure you want to delete <strong>{selectedItems.size}</strong> selected item{selectedItems.size !== 1 ? 's' : ''}?
+                  {t('items.deleteItemConfirm', { count: selectedItems.size, plural: selectedItems.size !== 1 ? 's' : '' }).split('{{count}}').map((part, index) => 
+                    index === 0 ? part : (
+                      <span key={index}>
+                        <strong className="font-semibold text-slate-900 dark:text-slate-100">{selectedItems.size}</strong>
+                        {part}
+                      </span>
+                    )
+                  )}
                 </p>
                 
                 {/* Show preview of selected items */}
                 <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Items to be deleted:</h4>
+                  <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('items.itemsToBeDeleted')}</h4>
                   <div className="space-y-2">
                     {Array.from(selectedItems).slice(0, 5).map(itemId => {
                       const item = items.find(i => i.id === itemId)
@@ -1031,14 +1041,14 @@ export default function ItemsPage() {
                     })}
                     {selectedItems.size > 5 && (
                       <div className="text-center py-2 text-slate-500 dark:text-slate-400 text-sm">
-                        ... and {selectedItems.size - 5} more item{selectedItems.size - 5 !== 1 ? 's' : ''}
+                        {t('items.andMoreItems', { count: selectedItems.size - 5, plural: selectedItems.size - 5 !== 1 ? 's' : '' })}
                       </div>
                     )}
                   </div>
                 </div>
                 
                 <p className="text-slate-500 dark:text-slate-400 text-sm mt-4">
-                  This action cannot be undone.
+                  {t('layouts.actionCannotBeUndone')}
                 </p>
               </div>
 
@@ -1047,13 +1057,13 @@ export default function ItemsPage() {
                   onClick={handleCancelBulkDelete}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('items.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmBulkDelete}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  Delete {selectedItems.size} Item{selectedItems.size !== 1 ? 's' : ''}
+                  Delete {selectedItems.size} {t('items.itemName', { plural: selectedItems.size !== 1 ? 's' : '' })}
                 </button>
               </div>
             </div>
@@ -1071,32 +1081,34 @@ export default function ItemsPage() {
                   <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Delete Item
+                  {t('items.deleteItem')}
                 </h3>
               </div>
               
               <div className="mb-6">
                 <p className="text-slate-700 dark:text-slate-300 mb-3">
-                  Are you sure you want to delete "<strong>{itemToDelete.name}</strong>"?
+                  {t('items.deleteItemConfirmSingle', { name: itemToDelete.name }).split('"').map((part, index) => 
+                    index === 1 ? <strong key={index} className="font-semibold text-slate-900 dark:text-slate-100">{part}</strong> : part
+                  )}
                 </p>
                 <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3 text-sm">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">SKU:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('items.skuLabelShort')}</span>
                     <span className="text-slate-900 dark:text-slate-100 font-medium">{itemToDelete.sku || 'N/A'}</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-slate-600 dark:text-slate-400">Price:</span>
+                    <span className="text-slate-600 dark:text-slate-400">{t('items.priceLabelShort')}</span>
                     <span className="text-slate-900 dark:text-slate-100 font-medium">${itemToDelete.unit_price.toFixed(2)}</span>
                   </div>
                   {itemToDelete.category && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Category:</span>
+                      <span className="text-slate-600 dark:text-slate-400">{t('items.categoryLabelShort')}</span>
                       <span className="text-slate-900 dark:text-slate-100 font-medium">{itemToDelete.category}</span>
                     </div>
                   )}
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-sm mt-3">
-                  This action cannot be undone.
+                  {t('layouts.actionCannotBeUndone')}
                 </p>
               </div>
 
@@ -1105,13 +1117,13 @@ export default function ItemsPage() {
                   onClick={handleCancelDelete}
                   className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
                 >
-                  Cancel
+                  {t('items.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmDelete}
                   className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  Delete Item
+                  {t('items.deleteItem')}
                 </button>
               </div>
             </div>

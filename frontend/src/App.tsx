@@ -2,8 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext'
 import { LayoutProvider } from './contexts/LayoutContext'
 import { SessionProvider } from './contexts/SessionContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ToastProvider } from './components/ui/Toast'
+import './styles/rtl.css'
 import AppShell from './components/AppShell'
 import LoginPage from './pages/LoginPage'
 import CompleteProfilePage from './pages/auth/CompleteProfilePage'
@@ -20,10 +22,11 @@ import SettingsPage from './components/SettingsPage'
 
 function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <LayoutProvider>
-          <Router>
+    <LanguageProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <LayoutProvider>
+            <Router>
           <Routes>
             {/* Auth routes - standalone (no SessionProvider) */}
             <Route path="/login" element={<LoginPage />} />
@@ -121,6 +124,7 @@ function App() {
       </LayoutProvider>
     </AuthProvider>
     </ToastProvider>
+    </LanguageProvider>
   )
 }
 

@@ -28,6 +28,23 @@ body {
   color: #0f172a; /* slate-900 */
 }
 
+/* Arabic font for RTL languages */
+[dir="rtl"] body {
+  font-family: 'Noto Sans Arabic', 'Tajawal', system-ui, sans-serif;
+}
+
+/* Enhanced Arabic text rendering */
+[dir="rtl"] {
+  font-feature-settings: "liga" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
+  line-height: 1.6;
+}
+
+/* Arabic text improvements */
+[dir="rtl"] * {
+  font-variant-ligatures: common-ligatures;
+}
+
 /* Dark theme base colors */
 .dark body {
   background-color: #0f172a; /* slate-900 */

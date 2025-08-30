@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["system-ui", "Avenir", "Helvetica", "Arial", "sans-serif"],
+        arabic: ["'Noto Sans Arabic'", "'Tajawal'", "system-ui", "sans-serif"],
       },
     },
   },

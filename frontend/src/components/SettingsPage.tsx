@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 import {
   UserCircleIcon,
   CameraIcon,
@@ -12,6 +13,39 @@ import { Can } from './Can';
 import { getVersion } from '../version';
 
 const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
+  
+  // Helper function to get translated status message labels
+  const getStatusMessageLabel = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return t('settings.pendingMessage');
+      case 'working':
+        return t('settings.workingMessage');
+      case 'done':
+        return t('settings.doneMessage');
+      case 'refused':
+        return t('settings.refusedMessage');
+      default:
+        return status;
+    }
+  };
+
+  // Helper function to get translated status message placeholders
+  const getStatusMessagePlaceholder = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return t('settings.messageForPending');
+      case 'working':
+        return t('settings.messageForWorking');
+      case 'done':
+        return t('settings.messageForDone');
+      case 'refused':
+        return t('settings.messageForRefused');
+      default:
+        return `Message for ${status}`;
+    }
+  };
   
   // Profile & Account
   const [name, setName] = React.useState('');
@@ -43,7 +77,7 @@ const SettingsPage: React.FC = () => {
       setLoadingProfile(true);
       setProfileError(null);
       if (!user) {
-        setProfileError('User not logged in.');
+        setProfileError(t('settings.userNotLoggedIn'));
         setLoadingProfile(false);
         return;
       }
@@ -53,7 +87,7 @@ const SettingsPage: React.FC = () => {
         .eq('id', user.id)
         .single();
       if (error || !data) {
-        setProfileError('User profile not found.');
+        setProfileError(t('settings.userProfileNotFound'));
       } else {
   setName(data.display_name || '');
   setPhone(data.phone || '');
@@ -72,7 +106,7 @@ const SettingsPage: React.FC = () => {
       setLoadingStatusMessages(true);
       setStatusMessagesError(null);
       if (!user) {
-        setStatusMessagesError('User not logged in.');
+        setStatusMessagesError(t('settings.userNotLoggedIn'));
         setLoadingStatusMessages(false);
         return;
       }
@@ -83,7 +117,7 @@ const SettingsPage: React.FC = () => {
         .eq('user_id', user.id);
       
       if (error) {
-        setStatusMessagesError('Failed to load status messages.');
+        setStatusMessagesError(t('settings.failedToLoadStatusMessages'));
       } else if (data) {
         const messages: any = {};
         
@@ -115,8 +149,8 @@ const SettingsPage: React.FC = () => {
       .from('profiles')
       .update({ display_name: name, phone, logo_url: logoUrl })
       .eq('id', user.id);
-    if (!error) alert('Profile updated!');
-    else alert('Error updating profile');
+    if (!error) alert(t('settings.profileUpdated'));
+    else alert(t('settings.errorUpdatingProfile'));
   };
 
   // Change password
@@ -124,8 +158,8 @@ const SettingsPage: React.FC = () => {
     e.preventDefault();
   if (!user) return;
   const { error } = await supabase.auth.updateUser({ password: newPassword });
-  if (!error) alert('Password changed!');
-  else alert('Error changing password');
+  if (!error) alert(t('settings.passwordChanged'));
+  else alert(t('settings.errorChangingPassword'));
   };
 
   // Save status messages to database
@@ -151,12 +185,12 @@ const SettingsPage: React.FC = () => {
         });
       
       if (error) {
-        alert('Error saving status messages: ' + error.message);
+        alert(t('settings.errorSavingStatusMessages') + error.message);
       } else {
-        alert('Status messages saved successfully!');
+        alert(t('settings.statusMessagesSaved'));
       }
     } catch (error) {
-      alert('Error saving status messages');
+      alert(t('settings.errorSavingStatusMessagesGeneric'));
     }
   };
 
@@ -175,7 +209,7 @@ const SettingsPage: React.FC = () => {
           .update({ logo_url: urlData.publicUrl })
           .eq('id', user.id);
       } else {
-        alert('Error uploading image');
+        alert(t('settings.errorUploadingImage'));
       }
     }
   };
@@ -186,10 +220,10 @@ const SettingsPage: React.FC = () => {
         {/* Hide page header on mobile, show only on md+ */}
         <div className="mb-6 md:mb-8 hidden sm:block">
           <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-            Settings
+            {t('settings.title')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2 text-base sm:text-lg">
-            Manage your account, preferences, notifications, and more
+            {t('settings.subtitle')}
           </p>
         </div>
 
@@ -199,10 +233,10 @@ const SettingsPage: React.FC = () => {
             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-xl">
               <UserCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">Profile & Account</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">{t('settings.profileAndAccount')}</h2>
           </div>
           {loadingProfile ? (
-            <div className="text-slate-500 dark:text-slate-400">Loading profile...</div>
+            <div className="text-slate-500 dark:text-slate-400">{t('settings.loadingProfile')}</div>
           ) : profileError ? (
             <div className="text-red-600 dark:text-red-400">{profileError}</div>
           ) : (
@@ -219,7 +253,7 @@ const SettingsPage: React.FC = () => {
                     <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
                       <img
                         src={logoUrl}
-                        alt="Shop Logo"
+                        alt={t('settings.shopLogo')}
                         className="w-20 h-20 sm:w-24 sm:h-24 object-cover"
                         onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/default-avatar.png'; }}
                       />
@@ -235,11 +269,11 @@ const SettingsPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Name</label>
-                  <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" />
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.name')}</label>
+                  <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={name} onChange={e => setName(e.target.value)} placeholder={t('settings.yourName')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.phoneNumber')}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <span className="text-slate-500 dark:text-slate-400">+964</span>
@@ -252,22 +286,22 @@ const SettingsPage: React.FC = () => {
                         const value = e.target.value.replace(/[^\d]/g, '');
                         setPhone('+964' + value);
                       }} 
-                      placeholder="7XXXXXXXXX" 
+                      placeholder={t('settings.phonePlaceholder')} 
                     />
                   </div>
                 </div>
               </div>
             </div>
-            <button type="submit" className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">Save Profile</button>
+            <button type="submit" className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">{t('settings.saveProfile')}</button>
           </form>
           )}
           <form onSubmit={handlePasswordChange} className="space-y-4 mt-6 sm:mt-8">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Change Password</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('settings.changePassword')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <input type="password" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={password} onChange={e => setPassword(e.target.value)} placeholder="Current password" />
-              <input type="password" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" />
+              <input type="password" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('settings.currentPassword')} />
+              <input type="password" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t('settings.newPassword')} />
             </div>
-            <button type="submit" className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">Change Password</button>
+            <button type="submit" className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-semibold">{t('settings.changePasswordButton')}</button>
           </form>
         </section>
 
@@ -278,12 +312,12 @@ const SettingsPage: React.FC = () => {
               <div className="p-2 bg-green-100 dark:bg-green-900 rounded-xl">
                 <ChatBubbleLeftRightIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">WhatsApp Messages</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('settings.whatsappMessages')}</h2>
             </div>
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
               <p className="text-amber-800 dark:text-amber-200 text-sm">
                 <ShieldExclamationIcon className="w-5 h-5 inline-block mr-2" />
-                Manager or admin permissions required to modify messaging settings.
+                {t('settings.permissionRequired')}
               </p>
             </div>
           </section>
@@ -293,18 +327,18 @@ const SettingsPage: React.FC = () => {
             <div className="p-2 bg-green-100 dark:bg-green-900 rounded-xl">
               <ChatBubbleLeftRightIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">WhatsApp Messages</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('settings.whatsappMessages')}</h2>
           </div>
           {loadingStatusMessages ? (
-            <div className="text-slate-500 dark:text-slate-400">Loading status messages...</div>
+            <div className="text-slate-500 dark:text-slate-400">{t('settings.loadingStatusMessages')}</div>
           ) : statusMessagesError ? (
             <div className="text-red-600 dark:text-red-400">{statusMessagesError}</div>
           ) : (
           <form onSubmit={handleNotifSave} className="space-y-4 sm:space-y-6">
             <div className="mb-4 sm:mb-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">WhatsApp API Key</label>
-                <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={whatsappApiKey} onChange={e => setWhatsappApiKey(e.target.value)} placeholder="WhatsApp API Key" />
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('settings.whatsappApiKey')}</label>
+                <input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value={whatsappApiKey} onChange={e => setWhatsappApiKey(e.target.value)} placeholder={t('settings.whatsappApiKeyPlaceholder')} />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -324,12 +358,12 @@ const SettingsPage: React.FC = () => {
                       : 'bg-slate-50 dark:bg-slate-700')
                   }
                 >
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 capitalize">{status} message</label>
-                  <textarea className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={2} value={statusMessages[status as keyof typeof statusMessages]} onChange={e => setStatusMessages(m => ({...m, [status]: e.target.value}))} placeholder={`Message for ${status}`}/>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{getStatusMessageLabel(status)}</label>
+                  <textarea className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={2} value={statusMessages[status as keyof typeof statusMessages]} onChange={e => setStatusMessages(m => ({...m, [status]: e.target.value}))} placeholder={getStatusMessagePlaceholder(status)}/>
                 </div>
               ))}
             </div>
-            <button type="submit" className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold">Save Messages Settings</button>
+            <button type="submit" className="w-full sm:w-auto bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold">{t('settings.saveMessagesSettings')}</button>
           </form>
           )}
         </section>
@@ -338,8 +372,8 @@ const SettingsPage: React.FC = () => {
         {/* App Version & Support */}
         <div className="mb-6 md:mb-8">
           <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <div className="mb-2 text-slate-700 dark:text-slate-300">Version: <span className="font-mono">{getVersion()}</span></div>
-            <div className="mb-2 text-slate-700 dark:text-slate-300">Need help? <a href="mailto:support@repario.app" className="text-blue-600 underline">Contact Support</a></div>
+            <div className="mb-2 text-slate-700 dark:text-slate-300">{t('settings.version')} <span className="font-mono">{getVersion()}</span></div>
+            <div className="mb-2 text-slate-700 dark:text-slate-300">{t('settings.needHelp')} <a href="mailto:support@repario.app" className="text-blue-600 underline">{t('settings.contactSupport')}</a></div>
           </div>
         </div>
       </div>

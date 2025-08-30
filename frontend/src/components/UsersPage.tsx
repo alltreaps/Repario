@@ -14,6 +14,7 @@ import { fetchUsers, createUser, updateUserProfile, deleteUser, toggleUserStatus
 import type { UserListItem, CreateUserRequest, UpdateUserProfileRequest } from '../types/user-management'
 import RequireRole from './RequireRole'
 import UserAvatar from './UserAvatar'
+import { useTranslation } from '../contexts/LanguageContext'
 
 // Update type for partial updates
 type UpdateUserData = Omit<UpdateUserProfileRequest, 'id'>
@@ -23,9 +24,11 @@ interface UserDrawerProps {
   user: UserListItem | null
   isOpen: boolean
   onClose: () => void
+  t: (key: string) => string
+  getTranslatedRole: (role: string) => string
 }
 
-function UserDrawer({ user, isOpen, onClose }: UserDrawerProps) {
+function UserDrawer({ user, isOpen, onClose, t, getTranslatedRole }: UserDrawerProps) {
   if (!isOpen || !user) return null
 
   const formatDate = (dateString: string) => {
@@ -43,7 +46,7 @@ function UserDrawer({ user, isOpen, onClose }: UserDrawerProps) {
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose} />
       <div className="absolute right-0 top-0 h-full w-96 bg-white dark:bg-slate-800 shadow-xl transform transition-transform duration-300 ease-in-out">
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">User Details</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('users.userDetails')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
@@ -67,24 +70,24 @@ function UserDrawer({ user, isOpen, onClose }: UserDrawerProps) {
               user.role === 'manager' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
               'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
             }`}>
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              {getTranslatedRole(user.role)}
             </span>
           </div>
 
           {/* Details */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Email</label>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('users.email')}</label>
               <p className="text-slate-900 dark:text-slate-100">{user.email}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('users.phone')}</label>
               <p className="text-slate-900 dark:text-slate-100">{user.phone || '—'}</p>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Created</label>
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('users.created')}</label>
               <p className="text-slate-900 dark:text-slate-100">{formatDate(user.created_at)}</p>
             </div>
           </div>
@@ -101,9 +104,10 @@ interface EditUserModalProps {
   onClose: () => void
   onSave: (userId: string, data: UpdateUserData) => Promise<void>
   onToggleStatus: (userId: string, isActive: boolean) => Promise<void>
+  t: (key: string) => string
 }
 
-function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUserModalProps) {
+function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus, t }: EditUserModalProps) {
   const [formData, setFormData] = useState<UpdateUserData>({})
   const [isLoading, setIsLoading] = useState(false)
   const [isTogglingStatus, setIsTogglingStatus] = useState(false)
@@ -156,7 +160,7 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
         
         <div className="relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl transform transition-all max-w-lg w-full mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Edit User</h3>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t('users.editUser')}</h3>
             <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -165,7 +169,7 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Full Name
+                {t('users.fullName')}
               </label>
               <input
                 type="text"
@@ -178,7 +182,7 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Phone
+                {t('users.phone')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -199,16 +203,16 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Role
+                {t('users.role')}
               </label>
               <select
                 value={formData.role || 'user'}
                 onChange={(e) => setFormData((prev: UpdateUserData) => ({ ...prev, role: e.target.value as 'admin' | 'manager' | 'user' }))}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
               >
-                <option value="user">User</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
+                <option value="user">{t('users.user')}</option>
+                <option value="manager">{t('users.manager')}</option>
+                <option value="admin">{t('users.admin')}</option>
               </select>
             </div>
 
@@ -225,8 +229,8 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
                 }`}
               >
                 {isTogglingStatus 
-                  ? (user.is_active ? 'Deactivating...' : 'Activating...')
-                  : (user.is_active ? 'Deactivate User' : 'Activate User')
+                  ? (user.is_active ? t('users.deactivating') : t('users.activating'))
+                  : (user.is_active ? t('users.deactivateUser') : t('users.activateUser'))
                 }
               </button>
               
@@ -237,14 +241,14 @@ function EditUserModal({ user, isOpen, onClose, onSave, onToggleStatus }: EditUs
                   onClick={onClose}
                   className="flex-1 px-4 py-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-medium transition-colors"
                 >
-                  Cancel
+                  {t('users.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
                 >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? t('users.saving') : t('users.saveChanges')}
                 </button>
               </div>
             </div>
@@ -260,9 +264,10 @@ interface CreateUserModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (data: CreateUserRequest) => Promise<void>
+  t: (key: string) => string
 }
 
-function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
+function CreateUserModal({ isOpen, onClose, onSave, t }: CreateUserModalProps) {
   const [formData, setFormData] = useState<CreateUserRequest>({
     email: '',
     password: '',
@@ -295,7 +300,7 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
         
         <div className="relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-2xl transform transition-all max-w-lg w-full mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Add New User</h3>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t('users.addNewUser')}</h3>
             <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -304,7 +309,7 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Email *
+                {t('users.email')} *
               </label>
               <input
                 type="email"
@@ -331,7 +336,7 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Full Name *
+                {t('users.fullName')} *
               </label>
               <input
                 type="text"
@@ -344,7 +349,7 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Phone *
+                {t('users.phone')} *
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -366,16 +371,16 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Role *
+                {t('users.role')} *
               </label>
               <select
                 value={formData.role}
                 onChange={(e) => setFormData((prev: CreateUserRequest) => ({ ...prev, role: e.target.value as 'admin' | 'manager' | 'user' }))}
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
               >
-                <option value="user">User</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
+                <option value="user">{t('users.user')}</option>
+                <option value="manager">{t('users.manager')}</option>
+                <option value="admin">{t('users.admin')}</option>
               </select>
             </div>
 
@@ -385,14 +390,14 @@ function CreateUserModal({ isOpen, onClose, onSave }: CreateUserModalProps) {
                 onClick={onClose}
                 className="flex-1 px-4 py-2 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-medium transition-colors"
               >
-                Cancel
+                {t('users.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
               >
-                {isLoading ? 'Creating...' : 'Create User'}
+                {isLoading ? t('users.creating') : t('users.createUser')}
               </button>
             </div>
           </form>
@@ -408,9 +413,10 @@ interface DeleteConfirmModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
+  t: (key: string) => string
 }
 
-function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmModalProps) {
+function DeleteConfirmModal({ user, isOpen, onClose, onConfirm, t }: DeleteConfirmModalProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleConfirm = async () => {
@@ -459,29 +465,29 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
               <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              Delete User
+              {t('users.deleteUser')}
             </h3>
           </div>
           
           <div className="mb-6">
             <p className="text-slate-700 dark:text-slate-300 mb-4">
-              Are you sure you want to delete the user "<strong>{user.full_name}</strong>"?
+              {t('users.deleteConfirmation')} "<strong>{user.full_name}</strong>"{t('users.deleteConfirmationEnd')}
             </p>
             
             <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-4">
               <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                User Details:
+                {t('users.userDetailsSection')}
               </h4>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Email:</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">{t('users.email')}:</span>
                   <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
                     {user.email}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Role:</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">{t('users.role')}:</span>
                   <span className={`px-2 py-1 text-xs font-medium rounded-lg ${getRoleColor(user.role)}`}>
                     {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                   </span>
@@ -489,7 +495,7 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
                 
                 {user.phone && (
                   <div className="flex items-center justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Phone:</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">{t('users.phone')}:</span>
                     <span className="text-sm text-slate-900 dark:text-slate-100">
                       {user.phone}
                     </span>
@@ -497,7 +503,7 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
                 )}
                 
                 <div className="flex items-start justify-between py-2 px-3 bg-white dark:bg-slate-600 rounded">
-                  <span className="text-sm text-slate-600 dark:text-slate-400">Created:</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">{t('users.created')}:</span>
                   <span className="text-sm text-slate-900 dark:text-slate-100 text-right">
                     {formatDate(user.created_at)}
                   </span>
@@ -506,7 +512,7 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
             </div>
             
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              This will permanently delete the user account and all associated data. This action cannot be undone.
+              {t('users.deleteWarning')}
             </p>
           </div>
 
@@ -516,14 +522,14 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
               onClick={onClose}
               className="px-5 py-2.5 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium transition-all duration-200"
             >
-              Cancel
+              {t('users.cancel')}
             </button>
             <button
               onClick={handleConfirm}
               disabled={isLoading}
               className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 disabled:from-red-400 disabled:to-red-400 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {isLoading ? 'Deleting...' : 'Delete User'}
+              {isLoading ? t('users.deleting') : t('users.deleteUser')}
             </button>
           </div>
         </div>
@@ -533,6 +539,7 @@ function DeleteConfirmModal({ user, isOpen, onClose, onConfirm }: DeleteConfirmM
 }
 
 export default function UsersPage() {
+  const { t } = useTranslation()
   const [users, setUsers] = useState<UserListItem[]>([])
   const [filteredUsers, setFilteredUsers] = useState<UserListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -618,6 +625,19 @@ export default function UsersPage() {
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
       default:
         return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
+    }
+  }
+
+  const getTranslatedRole = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return t('users.admin')
+      case 'manager':
+        return t('users.manager')
+      case 'user':
+        return t('users.user')
+      default:
+        return role.charAt(0).toUpperCase() + role.slice(1)
     }
   }
 
@@ -718,10 +738,10 @@ export default function UsersPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="hidden md:block">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent leading-tight pb-1">
-              User Management
+              {t('users.title')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">
-              Manage user accounts and permissions
+              {t('users.subtitle')}
             </p>
           </div>
           <button 
@@ -729,7 +749,7 @@ export default function UsersPage() {
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 w-full md:w-auto justify-center"
           >
             <PlusIcon className="w-5 h-5" />
-            Add New User
+            {t('users.addNewUser')}
           </button>
         </div>
         
@@ -741,7 +761,7 @@ export default function UsersPage() {
                 <CheckCircleIcon className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Active Users</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('users.activeUsers')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.is_active).length}</p>
               </div>
             </div>
@@ -753,7 +773,7 @@ export default function UsersPage() {
                 <ShieldCheckIcon className="w-5 h-5 md:w-6 md:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Admins</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('users.admins')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.role === 'admin').length}</p>
               </div>
             </div>
@@ -765,7 +785,7 @@ export default function UsersPage() {
                 <UserIcon className="w-5 h-5 md:w-6 md:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Managers</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('users.managers')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.role === 'manager').length}</p>
               </div>
             </div>
@@ -777,7 +797,7 @@ export default function UsersPage() {
                 <UserGroupIcon className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 md:ml-4">
-                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">Users</p>
+                <p className="text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400">{t('users.users')}</p>
                 <p className="text-lg md:text-2xl font-semibold text-slate-900 dark:text-slate-100">{users.filter(u => u.role === 'user').length}</p>
               </div>
             </div>
@@ -789,7 +809,7 @@ export default function UsersPage() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Search users..."
+                placeholder={t('users.searchUsers')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -803,19 +823,19 @@ export default function UsersPage() {
               <thead className="bg-slate-50 dark:bg-slate-700">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    User
+                    {t('users.tableHeaders.user')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Phone
+                    {t('users.tableHeaders.phone')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Created
+                    {t('users.tableHeaders.created')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Role
+                    {t('users.tableHeaders.role')}
                   </th>
                   <th className="px-6 py-4 text-center text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Actions
+                    {t('users.tableHeaders.actions')}
                   </th>
                 </tr>
               </thead>
@@ -825,7 +845,7 @@ export default function UsersPage() {
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                       <div className="flex items-center justify-center space-x-3">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
-                        <span className="text-sm font-medium">Loading users...</span>
+                        <span className="text-sm font-medium">{t('users.loadingUsers')}</span>
                       </div>
                     </td>
                   </tr>
@@ -833,13 +853,13 @@ export default function UsersPage() {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <div className="text-red-600 dark:text-red-400">
-                        <p className="font-semibold text-base">Error loading users</p>
+                        <p className="font-semibold text-base">{t('users.errorLoadingUsers')}</p>
                         <p className="text-sm mt-2 text-slate-600 dark:text-slate-400">{error}</p>
                         <button
                           onClick={fetchUsers}
                           className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                         >
-                          Try Again
+                          {t('users.tryAgain')}
                         </button>
                       </div>
                     </td>
@@ -849,8 +869,8 @@ export default function UsersPage() {
                     <td colSpan={5} className="px-6 py-16 text-center">
                       {searchTerm ? (
                         <div className="text-slate-500 dark:text-slate-400">
-                          <p className="font-semibold text-base">No users found</p>
-                          <p className="text-sm mt-2">Try adjusting your search or filters</p>
+                          <p className="font-semibold text-base">{t('users.noUsersFound')}</p>
+                          <p className="text-sm mt-2">{t('users.tryAdjustingSearch')}</p>
                         </div>
                       ) : (
                         <div className="max-w-md mx-auto">
@@ -859,9 +879,9 @@ export default function UsersPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                             </svg>
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No Team Members Yet</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">{t('users.noTeamMembersYet')}</h3>
                           <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            You haven't added any team members yet. Start by adding your first user account.
+                            {t('users.noTeamMembersDescription')}
                           </p>
                           <ActionIf ability="users.create">
                             <button
@@ -869,7 +889,7 @@ export default function UsersPage() {
                               className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 gap-2"
                             >
                               <PlusIcon className="w-5 h-5" />
-                              Add Your First User
+                              {t('users.addYourFirstUser')}
                             </button>
                           </ActionIf>
                         </div>
@@ -901,7 +921,7 @@ export default function UsersPage() {
                               </div>
                               {!user.is_active && (
                                 <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
-                                  Inactive
+                                  {t('users.inactive')}
                                 </span>
                               )}
                             </div>
@@ -923,7 +943,7 @@ export default function UsersPage() {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-full shadow-sm ${getRoleColor(user.role)}`}>
-                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                          {getTranslatedRole(user.role)}
                         </span>
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap">
@@ -1040,7 +1060,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        {getTranslatedRole(user.role)}
                       </span>
                     </div>
 
@@ -1077,6 +1097,8 @@ export default function UsersPage() {
             setIsDetailDrawerOpen(false)
             setSelectedUser(null)
           }}
+          t={t}
+          getTranslatedRole={getTranslatedRole}
         />
         
         <EditUserModal
@@ -1088,12 +1110,14 @@ export default function UsersPage() {
           }}
           onSave={handleUpdateUser}
           onToggleStatus={handleToggleUserStatus}
+          t={t}
         />
         
         <CreateUserModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSave={handleCreateUser}
+          t={t}
         />
         
         <DeleteConfirmModal
@@ -1104,6 +1128,7 @@ export default function UsersPage() {
             setSelectedUser(null)
           }}
           onConfirm={handleConfirmDelete}
+          t={t}
         />
       </div>
     </div>

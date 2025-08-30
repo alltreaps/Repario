@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { XMarkIcon, ClockIcon, DocumentTextIcon, CurrencyDollarIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import { fetchCustomerHistory } from '../lib/api'
+import { useTranslation } from '../contexts/LanguageContext'
 
 interface CustomerHistoryModalProps {
   customerId: string | null
@@ -35,6 +36,7 @@ interface CustomerHistoryData {
 }
 
 export default function CustomerHistoryModal({ customerId, customerName, isOpen, onClose }: CustomerHistoryModalProps) {
+  const { t } = useTranslation()
   const [historyData, setHistoryData] = useState<CustomerHistoryData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -104,6 +106,36 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
     }
   }
 
+  const getTranslatedStatus = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return t('customerHistory.pending')
+      case 'working':
+        return t('customerHistory.working')
+      case 'done':
+        return t('customerHistory.done')
+      case 'refused':
+        return t('customerHistory.refused')
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1)
+    }
+  }
+
+  const getTranslatedMessage = (message: string) => {
+    switch (message) {
+      case 'Invoice refused':
+        return t('customerHistory.invoiceRefused')
+      case 'Invoice completed':
+        return t('customerHistory.invoiceCompleted')
+      case 'Work started on invoice':
+        return t('customerHistory.workStartedOnInvoice')
+      case 'Invoice created':
+        return t('customerHistory.invoiceCreatedMessage')
+      default:
+        return message
+    }
+  }
+
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'invoice_created':
@@ -124,7 +156,7 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Customer History</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('customerHistory.title')}</h2>
             <p className="text-slate-600 dark:text-slate-400 mt-1">{customerName}</p>
           </div>
           <button
@@ -140,18 +172,18 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
-              <span className="ml-3 text-slate-600 dark:text-slate-400">Loading customer history...</span>
+              <span className="ml-3 text-slate-600 dark:text-slate-400">{t('customerHistory.loadingHistory')}</span>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <div className="text-red-600 dark:text-red-400">
-                <p className="font-semibold text-lg">Error loading history</p>
+                <p className="font-semibold text-lg">{t('customerHistory.errorLoadingHistory')}</p>
                 <p className="text-sm mt-2">{error}</p>
                 <button
                   onClick={loadCustomerHistory}
                   className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Try Again
+                  Try {t('customerHistory.tryAgain')}
                 </button>
               </div>
             </div>
@@ -163,7 +195,7 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                   <div className="flex items-center">
                     <DocumentTextIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Invoices</p>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('customerHistory.totalInvoices')}</p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{historyData.stats.total_invoices}</p>
                     </div>
                   </div>
@@ -173,7 +205,7 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                   <div className="flex items-center">
                     <ClockIcon className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Pending</p>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('customerHistory.pending')}</p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{historyData.stats.pending_invoices}</p>
                     </div>
                   </div>
@@ -183,7 +215,7 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                   <div className="flex items-center">
                     <CheckCircleIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Completed</p>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('customerHistory.completed')}</p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{historyData.stats.completed_invoices}</p>
                     </div>
                   </div>
@@ -193,7 +225,7 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                   <div className="flex items-center">
                     <CurrencyDollarIcon className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Value</p>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('customerHistory.totalValue')}</p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatCurrency(historyData.stats.total_amount)}</p>
                     </div>
                   </div>
@@ -202,11 +234,11 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
 
               {/* Timeline */}
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Activity Timeline</h3>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('customerHistory.activityTimeline')}</h3>
                 {historyData.timeline.length === 0 ? (
                   <div className="text-center py-8">
                     <DocumentTextIcon className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-500 dark:text-slate-400">No activity found for this customer</p>
+                    <p className="text-slate-500 dark:text-slate-400">{t('customerHistory.noActivityFound')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -219,11 +251,11 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                                {event.type === 'invoice_created' ? 'Invoice Created' : 'Status Updated'}
+                                {event.type === 'invoice_created' ? t('customerHistory.invoiceCreated') : t('customerHistory.statusUpdated')}
                               </p>
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
                                 {getStatusIcon(event.status)}
-                                <span className="ml-1">{event.status.charAt(0).toUpperCase() + event.status.slice(1)}</span>
+                                <span className="ml-1">{getTranslatedStatus(event.status)}</span>
                               </span>
                             </div>
                             <div className="text-right">
@@ -232,11 +264,11 @@ export default function CustomerHistoryModal({ customerId, customerName, isOpen,
                             </div>
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                            Invoice #{event.invoice_id.slice(0, 8)}... - {event.message}
+                                                      {t('customerHistory.invoicePrefix')}{event.invoice_id.slice(0, 8)}... - {getTranslatedMessage(event.message)}
                           </p>
                           {event.extra_note && (
                             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 italic">
-                              Note: {event.extra_note}
+                              {t('customerHistory.note')} {event.extra_note}
                             </p>
                           )}
                         </div>
